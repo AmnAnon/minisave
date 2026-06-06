@@ -13,6 +13,7 @@ import {
   progressPercent,
   resolveFactoryAddress,
   toTokenUnits,
+  txUrl,
   vaultUnlocked,
   type VaultView,
 } from "@/lib/contracts";
@@ -132,7 +133,13 @@ function DepositPanel({
         args: [factoryAddress, parsedAmount],
       });
       setStatus(`Approval submitted: ${hash.slice(0, 10)}...`);
-      toast.success("Approval submitted.", { id: "vault-approve" });
+      toast.success("Approval submitted.", {
+        id: "vault-approve",
+        action: {
+          label: "Open tx",
+          onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
+        },
+      });
       setTimeout(() => refetch(), 2500);
     } catch (err) {
       const message = humanizeError(err);
@@ -155,7 +162,14 @@ function DepositPanel({
       });
       setStatus(`Deposit submitted: ${hash.slice(0, 10)}...`);
       setAmount("");
-      toast.success("Deposit submitted.", { id: "vault-deposit", description: "Refreshing your portfolio position." });
+      toast.success("Deposit submitted.", {
+        id: "vault-deposit",
+        description: "Refreshing your portfolio position.",
+        action: {
+          label: "Open tx",
+          onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
+        },
+      });
       setTimeout(() => refetch(), 2500);
     } catch (err) {
       const message = humanizeError(err);
@@ -180,6 +194,10 @@ function DepositPanel({
       toast.success(unlocked ? "Withdrawal submitted." : "Early withdrawal submitted.", {
         id: "vault-withdraw",
         description: unlocked ? "Full amount should return to your wallet." : `Penalty remains ${DEFAULT_PENALTY_BPS / 100}% while locked.`,
+        action: {
+          label: "Open tx",
+          onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
+        },
       });
       setTimeout(() => refetch(), 2500);
     } catch (err) {
@@ -300,6 +318,10 @@ export function VaultDashboard() {
 
   return (
     <section className="space-y-6">
+      <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.03] p-4 text-sm text-amber-100/65">
+        If a vault says it was created but does not appear yet, tap <strong>Refresh</strong> and confirm the transaction on Blockscout from the toast or wallet history link above.
+      </div>
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/45">Portfolio</div>

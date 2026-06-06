@@ -1,8 +1,10 @@
 "use client";
 
-import { PiggyBank, ShieldCheck, Wallet } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, PiggyBank, ShieldCheck, Wallet } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
 import { PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
+import { addressUrl } from "@/lib/contracts";
 
 function formatBalance(value?: string, decimals = 4) {
   return Number(value || "0").toLocaleString(undefined, {
@@ -12,7 +14,7 @@ function formatBalance(value?: string, decimals = 4) {
 }
 
 export function UserBalance() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount();
 
   const { data: celoBalance, isLoading: celoLoading } = useBalance({
     address,
@@ -43,6 +45,12 @@ export function UserBalance() {
         </div>
         <div className="mt-4 rounded-2xl border border-amber-500/10 bg-black/20 p-4 text-sm text-amber-100/65">
           Your live spending + saving rail for MiniSave. Keep CELO for gas and {PRIMARY_STABLE_TOKEN.symbol} for deposits.
+          <div className="mt-3 flex items-center justify-between gap-3 text-xs text-amber-100/55">
+            <span>Network: {chain?.name || "Unknown"}</span>
+            <Link href={addressUrl(address)} target="_blank" className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200">
+              Wallet history <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -86,6 +86,13 @@ export const erc20Abi = [
     ],
     outputs: [{ name: "", type: "uint256" }],
   },
+  {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
 ] as const;
 
 export type VaultView = {
@@ -112,6 +119,14 @@ export function formatTokenAmount(value: bigint, decimals = PRIMARY_STABLE_TOKEN
 
 export function resolveFactoryAddress() {
   return FACTORY_ADDRESS as `0x${string}` | "";
+}
+
+export function txUrl(hash: string) {
+  return `https://celo-sepolia.blockscout.com/tx/${hash}`;
+}
+
+export function addressUrl(address: string) {
+  return `https://celo-sepolia.blockscout.com/address/${address}`;
 }
 
 export function progressPercent(vault: VaultView) {

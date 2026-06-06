@@ -3,14 +3,40 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { WagmiProvider, createConfig, http, injected, useConnect } from "wagmi";
-import { celo, celoAlfajores } from "wagmi/chains";
+import { celo } from "wagmi/chains";
+import { defineChain } from "viem";
+
+export const celoSepolia = defineChain({
+  id: 11142220,
+  name: "Celo Sepolia",
+  nativeCurrency: {
+    decimals: 18,
+    name: "CELO",
+    symbol: "CELO",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://forno.celo-sepolia.celo-testnet.org"],
+    },
+    public: {
+      http: ["https://forno.celo-sepolia.celo-testnet.org"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Blockscout",
+      url: "https://celo-sepolia.blockscout.com",
+    },
+  },
+  testnet: true,
+});
 
 const wagmiConfig = createConfig({
-  chains: [celo, celoAlfajores],
+  chains: [celo, celoSepolia],
   connectors: [injected()],
   transports: {
     [celo.id]: http(),
-    [celoAlfajores.id]: http(),
+    [celoSepolia.id]: http("https://forno.celo-sepolia.celo-testnet.org"),
   },
   ssr: true,
 });

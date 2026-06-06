@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useAccount, useBalance, useWriteContract } from "wagmi";
 import { ArrowRight, CalendarClock, ChevronRight, Loader2, PiggyBank, Sparkles, Target, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits } from "@/lib/contracts";
+import { piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits, txUrl } from "@/lib/contracts";
 import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 
 function dateToUnixTimestamp(value: string) {
@@ -91,7 +91,14 @@ export function CreateGoalForm() {
 
       const success = `Vault created. Tx: ${hash.slice(0, 10)}... Redirecting to portfolio.`;
       setStatus(success);
-      toast.success("Vault created successfully.", { id: "create-vault", description: "Redirecting to your live portfolio." });
+      toast.success("Vault created successfully.", {
+        id: "create-vault",
+        description: `View on Blockscout: ${hash.slice(0, 10)}...`,
+        action: {
+          label: "Open tx",
+          onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
+        },
+      });
       setTimeout(() => {
         router.push("/#portfolio");
       }, 1200);
