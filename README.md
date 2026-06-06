@@ -74,16 +74,19 @@ Current build targets **cUSD first** for clarity and MiniPay fit.
 
 - **Celo mainnet cUSD / StableTokenUSD**: `0x765DE816845861e75A25fCA122bb6898B8B1282a`
 - **Celo Sepolia test token (current test deployment)**: `0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b`
+- **Latest Celo Sepolia PenaltyReserve**: `0x995Ca2D73744B0Fa1942Fe5A2e10d6a709f7963f`
+- **Latest Celo Sepolia PiggyBankFactory**: `0xd3F293cfDacC5b0237232906782a8a9e9e52971e`
 
 These are kept in config/constants and env templates, not inline business logic.
 
 ## Immediate next steps
 1. complete clean MiniPay smoke test on the latest Celo Sepolia deployment
 2. verify visible portfolio positions, token balances, and transaction history links inside MiniPay
-3. deploy the hardened contract to Celo mainnet
-4. update Vercel env with the final mainnet factory/token config
-5. run one tiny mainnet smoke test
-6. onboard 3-5 real testers for onchain traction
+3. update Vercel and local env with the latest reserve-backed factory deployment
+4. deploy the hardened contract to Celo mainnet
+5. update Vercel env with the final mainnet factory/token config
+6. run one tiny mainnet smoke test
+7. onboard 3-5 real testers for onchain traction
 
 ## Roadmap
 - v2: RewardDistributor contract — users who reach their savings goal or survive their deadline become eligible for a proportional share of the penalty pool, weighted by deposited amount.
