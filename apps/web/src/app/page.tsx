@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PiggyBank, ShieldCheck, Smartphone, AlertTriangle } from "lucide-react";
+import { PiggyBank, ShieldCheck, Smartphone, AlertTriangle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserBalance } from "@/components/user-balance";
 import { VaultDashboard } from "@/components/vault-dashboard";
@@ -12,13 +12,13 @@ const features = [
     icon: AlertTriangle,
   },
   {
-    title: "MiniPay-native UX",
-    description: "Built inside the MiniPay starter shell for the 375px mobile viewport and injected wallet flow.",
+    title: "MiniPay-native flow",
+    description: "Built for the MiniPay shell with wallet injection, fast mobile actions, and a cleaner portfolio-first UX.",
     icon: Smartphone,
   },
   {
-    title: "Onchain vaults on Celo",
-    description: `Each goal is stored onchain with ${PRIMARY_STABLE_TOKEN.symbol} as the initial stablecoin target.`,
+    title: "Onchain vault positions",
+    description: `Every vault is a visible live position on Celo, funded with ${PRIMARY_STABLE_TOKEN.symbol} in this release.`,
     icon: ShieldCheck,
   },
 ];
@@ -27,27 +27,28 @@ export default function Home() {
   return (
     <main className="flex-1 bg-background">
       <section className="relative overflow-hidden border-b border-amber-500/10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(201,168,76,0.12),transparent_35%),radial-gradient(circle_at_bottom,rgba(0,214,255,0.08),transparent_30%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(201,168,76,0.14),transparent_35%),radial-gradient(circle_at_bottom,rgba(0,214,255,0.08),transparent_30%)]" />
         <div className="container relative mx-auto max-w-6xl px-4 py-16 sm:py-20">
-          <div className="mx-auto max-w-3xl text-center">
+          <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-sm font-medium text-amber-200">
               <PiggyBank className="h-4 w-4" />
-              MiniPay savings vaults with an early-exit cost
+              Premium savings vaults with an early-exit cost
             </div>
             <h1 className="text-4xl font-semibold tracking-tight text-amber-50 sm:text-6xl">
-              Save with discipline on <span className="text-amber-400">MiniPay</span>
+              Build savings pressure that feels <span className="text-amber-400">real</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-amber-100/70 sm:text-xl">
-              MiniSave turns savings goals into onchain vaults. Create a target, deposit {PRIMARY_STABLE_TOKEN.symbol}, and only unlock cleanly when your goal is hit or your deadline expires.
+              MiniSave turns savings goals into visible onchain positions. Create a target, fund it with {PRIMARY_STABLE_TOKEN.symbol}, and make breaking discipline costly.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="min-w-40 bg-amber-500 text-black hover:bg-amber-400">
-                <Link href="/create">Create Vault</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="min-w-40 border-amber-500/30 text-amber-100 hover:bg-amber-500/10">
-                <Link href="https://docs.celo.org/build-on-celo/build-on-minipay/overview" target="_blank" rel="noopener noreferrer">
-                  MiniPay Docs
+              <Button asChild size="lg" className="min-w-44 bg-amber-500 text-black hover:bg-amber-400">
+                <Link href="/create">
+                  Create Vault
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="min-w-44 border-amber-500/30 text-amber-100 hover:bg-amber-500/10">
+                <Link href="#portfolio">View Portfolio</Link>
               </Button>
             </div>
           </div>
@@ -62,8 +63,8 @@ export default function Home() {
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
-              <div key={feature.title} className="rounded-2xl border border-amber-500/10 bg-[#0f0c08]/80 p-6 shadow-sm">
-                <div className="mb-4 inline-flex rounded-xl bg-amber-500/10 p-3 text-amber-300">
+              <div key={feature.title} className="rounded-[28px] border border-amber-500/10 bg-[#0f0c08]/80 p-6 shadow-sm">
+                <div className="mb-4 inline-flex rounded-2xl bg-amber-500/10 p-3 text-amber-300">
                   <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-semibold text-amber-50">{feature.title}</h3>
@@ -74,7 +75,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="container mx-auto max-w-6xl px-4 pb-16">
+      <section id="portfolio" className="container mx-auto max-w-6xl px-4 pb-16">
         <VaultDashboard />
       </section>
     </main>

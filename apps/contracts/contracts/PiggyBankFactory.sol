@@ -3,8 +3,9 @@ pragma solidity ^0.8.28;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract PiggyBankFactory {
+contract PiggyBankFactory is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 public constant BPS_DENOMINATOR = 10_000;
@@ -31,6 +32,7 @@ contract PiggyBankFactory {
         uint256 deadline
     );
     event Deposited(address indexed owner, uint256 indexed vaultId, uint256 amount, uint256 totalDeposited);
+    event PenaltyApplied(address indexed owner, uint256 indexed vaultId, uint256 penaltyAmount, address treasury);
     event Withdrawn(
         address indexed owner,
         uint256 indexed vaultId,
@@ -42,6 +44,7 @@ contract PiggyBankFactory {
     error InvalidAddress();
     error InvalidAmount();
     error InvalidDeadline();
+    error InvalidLabel();
     error InvalidPenaltyBps();
     error VaultNotFound();
     error VaultClosed();
@@ -60,6 +63,7 @@ contract PiggyBankFactory {
         uint256 goalAmount,
         uint256 deadline
     ) external returns (uint256 vaultId) {
+        if (bytes(label).length == 0) revert InvalidLabel();
         if (goalAmount == 0) revert InvalidAmount();
         if (deadline != 0 && deadline <= block.timestamp) revert InvalidDeadline();
 
@@ -77,7 +81,7 @@ contract PiggyBankFactory {
         emit VaultCreated(msg.sender, vaultId, label, goalAmount, deadline);
     }
 
-    function deposit(uint256 vaultId, uint256 amount) external {
+    function deposit(uint256 vaultId, uint256 amount) external nonReentrant {
         if (amount == 0) revert InvalidAmount();
 
         Vault storage vault = _vault(msg.sender, vaultId);
@@ -89,7 +93,7 @@ contract PiggyBankFactory {
         emit Deposited(msg.sender, vaultId, amount, vault.deposited);
     }
 
-    function withdraw(uint256 vaultId) external {
+    function withdraw(uint256 vaultId) external nonReentrant {
         Vault storage vault = _vault(msg.sender, vaultId);
         if (vault.withdrawn) revert VaultClosed();
         if (vault.deposited == 0) revert InvalidAmount();
@@ -105,6 +109,7 @@ contract PiggyBankFactory {
             userAmount = vault.deposited - penaltyAmount;
             if (penaltyAmount > 0) {
                 IERC20(token).safeTransfer(treasury, penaltyAmount);
+                emit PenaltyApplied(msg.sender, vaultId, penaltyAmount, treasury);
             }
         }
 

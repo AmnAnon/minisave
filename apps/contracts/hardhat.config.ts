@@ -18,11 +18,11 @@ const config: HardhatUserConfig = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 42220,
     },
-    // Celo Alfajores Testnet
-    alfajores: {
-      url: "https://alfajores-forno.celo-staging.org",
+    // Celo Sepolia Testnet
+    celoSepolia: {
+      url: "https://forno.celo-sepolia.celo-testnet.org",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 44787,
+      chainId: 11142220,
     },
     // Local development
     localhost: {
@@ -33,7 +33,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       celo: process.env.ETHERSCAN_API_KEY || "",
-      alfajores: process.env.ETHERSCAN_API_KEY || "",
+      celoSepolia: process.env.ETHERSCAN_API_KEY || "",
     },
     customChains: [
       {
@@ -45,11 +45,11 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: "alfajores",
-        chainId: 44787,
+        network: "celoSepolia",
+        chainId: 11142220,
         urls: {
-          apiURL: "https://api-alfajores.celoscan.io/api",
-          browserURL: "https://alfajores.celoscan.io/",
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://celo-sepolia.blockscout.com/",
         },
       },
     ],

@@ -1,91 +1,128 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Menu, ExternalLink } from "lucide-react"
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Menu, ExternalLink, PiggyBank, Sparkles, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { ConnectButton } from "@/components/connect-button"
+import { Button } from "@/components/ui/button";
+import { ConnectButton } from "@/components/connect-button";
+import { MINISAVE_APP_NAME } from "@/lib/minisave";
 
 const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "Create Goal", href: "/create" },
-  { name: "Docs", href: "https://docs.celo.org", external: true },
-]
+  { name: "Portfolio", href: "/" },
+  { name: "Create Vault", href: "/create" },
+  { name: "Celo Docs", href: "https://docs.celo.org", external: true },
+];
 
 export function Navbar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80">
-              <div className="flex items-center gap-2 mb-8">
-                <span className="font-bold text-lg">MiniSave</span>
-              </div>
-              <nav className="flex flex-col gap-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    target={link.external ? "_blank" : undefined}
-                    rel={link.external ? "noopener noreferrer" : undefined}
-                    className={`flex items-center gap-2 text-base font-medium transition-colors hover:text-primary ${
-                      pathname === link.href ? "text-foreground" : "text-foreground/70"
-                    }`}
-                  >
-                    {link.name}
-                    {link.external && <ExternalLink className="h-4 w-4" />}
-                  </Link>
-                ))}
-                <div className="mt-6 pt-6 border-t">
-                  <ConnectButton />
-                </div>
-              </nav>
-            </SheetContent>
-          </Sheet>
-
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <span className="hidden font-bold text-xl sm:inline-block">MiniSave</span>
-          </Link>
-        </div>
-
-        <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              target={link.external ? "_blank" : undefined}
-              rel={link.external ? "noopener noreferrer" : undefined}
-              className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
-                pathname === link.href
-                  ? "text-foreground"
-                  : "text-foreground/70"
-              }`}
-            >
-              {link.name}
-              {link.external && <ExternalLink className="h-4 w-4" />}
-            </Link>
-          ))}
-
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#090704]/80 backdrop-blur-xl">
+        <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <ConnectButton />
+            <Button variant="ghost" size="icon" className="md:hidden text-amber-100 hover:bg-amber-500/10" onClick={() => setMobileOpen(true)}>
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+
+            <Link href="/" className="group flex items-center gap-3 transition-opacity hover:opacity-90">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300 shadow-[0_0_30px_rgba(201,168,76,0.15)]">
+                <PiggyBank className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold tracking-wide text-amber-50">{MINISAVE_APP_NAME}</div>
+                <div className="text-[10px] uppercase tracking-[0.22em] text-amber-200/45">MiniPay Savings Vaults</div>
+              </div>
+            </Link>
           </div>
-        </nav>
-      </div>
-    </header>
-  )
+
+          <nav className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noopener noreferrer" : undefined}
+                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                  pathname === link.href ? "text-amber-300" : "text-amber-100/65 hover:text-amber-50"
+                }`}
+              >
+                {link.name}
+                {link.external ? <ExternalLink className="h-4 w-4" /> : null}
+              </Link>
+            ))}
+
+            <div className="flex items-center gap-3">
+              <div className="hidden items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300 lg:flex">
+                <Sparkles className="h-3.5 w-3.5" /> Live on Celo Sepolia
+              </div>
+              <ConnectButton />
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      {mobileOpen ? (
+        <>
+          <button
+            aria-label="Close menu overlay"
+            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="fixed left-0 top-0 z-50 h-full w-[84%] max-w-sm border-r border-amber-500/15 bg-[#090704] p-6 shadow-2xl md:hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300">
+                  <PiggyBank className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-base font-semibold text-amber-50">{MINISAVE_APP_NAME}</div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/40">Discipline vaults</div>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" className="text-amber-100 hover:bg-amber-500/10" onClick={() => setMobileOpen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <nav className="mt-10 flex flex-col gap-3">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  target={link.external ? "_blank" : undefined}
+                  rel={link.external ? "noopener noreferrer" : undefined}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center justify-between rounded-2xl border px-4 py-4 text-base font-medium transition ${
+                    pathname === link.href
+                      ? "border-amber-400/30 bg-amber-500/10 text-amber-200"
+                      : "border-amber-500/10 bg-white/[0.02] text-amber-100/75 hover:border-amber-500/25 hover:text-amber-50"
+                  }`}
+                >
+                  <span>{link.name}</span>
+                  {link.external ? <ExternalLink className="h-4 w-4" /> : null}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="mt-6 rounded-2xl border border-emerald-500/15 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+              Early exit penalty is on. Stay locked or pay the price.
+            </div>
+
+            <div className="mt-6 border-t border-amber-500/10 pt-6">
+              <ConnectButton />
+            </div>
+          </div>
+        </>
+      ) : null}
+    </>
+  );
 }
