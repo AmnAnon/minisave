@@ -67,14 +67,14 @@ Supports:
 ## Stablecoin defaults
 Current frontend default:
 - `USDm` / `StableTokenUSD` on Celo mainnet: `0x765de816845861e75a25fca122bb6898b8b1282a`
-- Celo Sepolia StableTokenUSD: `0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b`
+- Alfajores cUSD / StableTokenUSD test token: `0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1`
 
 These are kept in config/constants and env templates, not inline business logic.
 
 ## Immediate next steps
 1. remove leftover GoalVault template files
 2. wire live vault reads/deposits/withdrawals in frontend
-3. deploy to Celo Sepolia
+3. deploy to Alfajores
 4. test in MiniPay developer mode
 5. deploy to Celo mainnet
 6. onboard 3-5 real testers for onchain traction
@@ -92,5 +92,6 @@ MiniPay users are utility-first, mobile-first, and stablecoin-native. MiniSave g
 ### Current build status
 - MiniPay-compatible frontend scaffold
 - Celo contract foundation with early exit penalty mechanic
-- stablecoin config for Celo deployment
+- stablecoin config for Celo + Alfajores deployment
+- MiniPay wallet flow refactored away from RainbowKit
 - deploy/test flow in progress
