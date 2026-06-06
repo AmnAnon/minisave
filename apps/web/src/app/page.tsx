@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PiggyBank, ShieldCheck, Smartphone, AlertTriangle, ArrowRight } from "lucide-react";
+import { PiggyBank, ShieldCheck, Smartphone, AlertTriangle, ArrowRight, Sparkles, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserBalance } from "@/components/user-balance";
 import { VaultDashboard } from "@/components/vault-dashboard";
@@ -23,35 +23,68 @@ const features = [
   },
 ];
 
+const steps = [
+  "Create a savings vault with a goal and optional deadline",
+  `Fund it using ${PRIMARY_STABLE_TOKEN.symbol} from your MiniPay wallet`,
+  `Withdraw cleanly when unlocked, or exit early with a ${DEFAULT_PENALTY_BPS / 100}% penalty`,
+];
+
 export default function Home() {
   return (
     <main className="flex-1 bg-background">
       <section className="relative overflow-hidden border-b border-amber-500/10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(201,168,76,0.14),transparent_35%),radial-gradient(circle_at_bottom,rgba(0,214,255,0.08),transparent_30%)]" />
-        <div className="container relative mx-auto max-w-6xl px-4 py-16 sm:py-20">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-sm font-medium text-amber-200">
-              <PiggyBank className="h-4 w-4" />
-              Premium savings vaults with an early-exit cost
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(201,168,76,0.16),transparent_35%),radial-gradient(circle_at_bottom,rgba(0,214,255,0.08),transparent_30%)]" />
+        <div className="container relative mx-auto max-w-6xl px-4 py-10 sm:py-16">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div>
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-amber-200">
+                <Sparkles className="h-3.5 w-3.5" />
+                What MiniSave does
+              </div>
+              <h1 className="text-4xl font-semibold tracking-tight text-amber-50 sm:text-5xl">
+                Save for a goal. Break early and <span className="text-amber-400">pay for it</span>.
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-7 text-amber-100/70 sm:text-lg">
+                MiniSave is a MiniPay savings vault app on Celo. It helps you lock money toward a target, track your position onchain, and add real discipline through an early-exit penalty.
+              </p>
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Button asChild size="lg" className="min-w-44 bg-amber-500 text-black hover:bg-amber-400">
+                  <Link href="/create">
+                    Create Vault
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="min-w-44 border-amber-500/30 text-amber-100 hover:bg-amber-500/10">
+                  <Link href="/create">Start Saving</Link>
+                </Button>
+              </div>
             </div>
-            <h1 className="text-4xl font-semibold tracking-tight text-amber-50 sm:text-6xl">
-              Build savings pressure that feels <span className="text-amber-400">real</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-amber-100/70 sm:text-xl">
-              MiniSave turns savings goals into visible onchain positions. Create a target, fund it with {PRIMARY_STABLE_TOKEN.symbol}, and make breaking discipline costly.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="min-w-44 bg-amber-500 text-black hover:bg-amber-400">
-                <Link href="/create">
-                  Create Vault
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="min-w-44 border-amber-500/30 text-amber-100 hover:bg-amber-500/10">
-                <Link href="#portfolio">View Portfolio</Link>
-              </Button>
+
+            <div className="rounded-[30px] border border-amber-500/15 bg-[#0f0c08]/90 p-6 shadow-[0_0_60px_rgba(0,0,0,0.18)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-300">
+                  <WalletCards className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/45">First screen explainer</div>
+                  <div className="mt-1 text-lg font-semibold text-amber-50">A MiniPay vault for disciplined saving</div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                {steps.map((step, index) => (
+                  <div key={step} className="flex gap-3 rounded-2xl border border-amber-500/10 bg-black/20 p-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-sm font-semibold text-amber-300">
+                      {index + 1}
+                    </div>
+                    <p className="text-sm leading-6 text-amber-100/68">{step}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+
           <div className="mt-10">
             <UserBalance />
           </div>
@@ -75,7 +108,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="portfolio" className="container mx-auto max-w-6xl px-4 pb-16">
+      <section className="container mx-auto max-w-6xl px-4 pb-16">
         <VaultDashboard />
       </section>
     </main>
