@@ -1,48 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, PiggyBank, Sparkles, X } from "lucide-react";
+import { Home, PiggyBank, PlusCircle, Sparkles, WalletCards } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@/components/connect-button";
 import { MINISAVE_APP_NAME } from "@/lib/minisave";
 
 const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "Create Vault", href: "/create" },
-  { name: "Portfolio", href: "/portfolio" },
+  { name: "Home", href: "/", icon: Home },
+  { name: "Create Vault", href: "/create", icon: PlusCircle },
+  { name: "Portfolio", href: "/portfolio", icon: WalletCards },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#090704]/90 backdrop-blur-xl">
         <div className="container flex min-h-16 max-w-screen-2xl items-center justify-between px-4 py-2">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button variant="ghost" size="icon" className="shrink-0 text-amber-100 hover:bg-amber-500/10 md:hidden" onClick={() => setMobileOpen(true)}>
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-
-            <Link href="/" className="group flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300 shadow-[0_0_30px_rgba(201,168,76,0.15)]">
-                <PiggyBank className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold tracking-wide text-amber-50">{MINISAVE_APP_NAME}</div>
-                <div className="truncate text-[10px] uppercase tracking-[0.18em] text-amber-200/45">MiniPay Savings Vaults</div>
-              </div>
-            </Link>
-          </div>
+          <Link href="/" className="group flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300 shadow-[0_0_30px_rgba(201,168,76,0.15)]">
+              <PiggyBank className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold tracking-wide text-amber-50">{MINISAVE_APP_NAME}</div>
+              <div className="truncate text-[10px] uppercase tracking-[0.18em] text-amber-200/45">MiniPay Savings Vaults</div>
+            </div>
+          </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
             {navLinks.map((link) => (
@@ -67,56 +53,29 @@ export function Navbar() {
         </div>
       </header>
 
-      {mobileOpen ? (
-        <>
-          <button
-            aria-label="Close menu overlay"
-            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-          <div className="fixed left-0 top-0 z-50 h-full w-[84%] max-w-sm border-r border-amber-500/15 bg-[#090704] p-6 shadow-2xl md:hidden">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300">
-                  <PiggyBank className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-base font-semibold text-amber-50">{MINISAVE_APP_NAME}</div>
-                  <div className="truncate text-[10px] uppercase tracking-[0.18em] text-amber-200/40">MiniPay Savings Vaults</div>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" className="shrink-0 text-amber-100 hover:bg-amber-500/10" onClick={() => setMobileOpen(false)}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-amber-500/10 bg-[#090704]/95 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-xl md:hidden">
+        <div className="mx-auto grid max-w-lg grid-cols-3 gap-2 rounded-3xl border border-amber-500/10 bg-[#120f0b]/95 p-2 shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const active = pathname === link.href;
 
-            <nav className="mt-10 flex flex-col gap-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center justify-between rounded-2xl border px-4 py-4 text-base font-medium transition ${
-                    pathname === link.href
-                      ? "border-amber-400/30 bg-amber-500/10 text-amber-200"
-                      : "border-amber-500/10 bg-white/[0.02] text-amber-100/75 hover:border-amber-500/25 hover:text-amber-50"
-                  }`}
-                >
-                  <span>{link.name}</span>
-                </Link>
-              ))}
-            </nav>
-
-            <div className="mt-6 rounded-2xl border border-emerald-500/15 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-              Early exit penalty is on. Stay locked or pay the price.
-            </div>
-
-            <div className="mt-6 border-t border-amber-500/10 pt-6">
-              <ConnectButton />
-            </div>
-          </div>
-        </>
-      ) : null}
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-3 text-[11px] font-medium transition ${
+                  active
+                    ? "bg-amber-500/12 text-amber-300"
+                    : "text-amber-100/60 hover:bg-white/[0.03] hover:text-amber-50"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="leading-none">{link.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </>
   );
 }
