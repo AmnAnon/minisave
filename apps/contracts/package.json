@@ -8,6 +8,7 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy": "hardhat ignition deploy ignition/modules/PiggyBankFactory.ts",
+    "deploy:mock-token": "hardhat ignition deploy ignition/modules/MockERC20.ts --network celoSepolia",
     "deploy:celo-sepolia": "hardhat ignition deploy ignition/modules/PiggyBankFactory.ts --network celoSepolia",
     "deploy:celo": "hardhat ignition deploy ignition/modules/PiggyBankFactory.ts --network celo",
     "verify": "hardhat verify",

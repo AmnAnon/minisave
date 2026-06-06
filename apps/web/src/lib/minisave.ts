@@ -5,10 +5,10 @@ export type StableTokenConfig = {
   decimals: number;
 };
 
-const configuredSymbol = process.env.NEXT_PUBLIC_DEFAULT_TOKEN_SYMBOL || "cUSD";
+const configuredSymbol = process.env.NEXT_PUBLIC_DEFAULT_TOKEN_SYMBOL || "mUSD";
 const configuredAddress =
   (process.env.NEXT_PUBLIC_DEFAULT_TOKEN_ADDRESS as `0x${string}` | undefined) ||
-  "0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b";
+  "0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003";
 const configuredDecimals = Number(process.env.NEXT_PUBLIC_DEFAULT_TOKEN_DECIMALS || "18");
 
 export const MINISAVE_APP_NAME = "MiniSave";
@@ -18,7 +18,14 @@ export const PENALTY_RESERVE_ADDRESS = process.env.NEXT_PUBLIC_PENALTY_RESERVE_A
 
 export const PRIMARY_STABLE_TOKEN: StableTokenConfig = {
   symbol: configuredSymbol,
-  label: configuredSymbol === "USDm" ? "Mento Dollar" : configuredSymbol === "cUSD" ? "Celo Dollar" : configuredSymbol,
+  label:
+    configuredSymbol === "USDm"
+      ? "Mento Dollar"
+      : configuredSymbol === "cUSD"
+        ? "Celo Dollar"
+        : configuredSymbol === "mUSD"
+          ? "MiniSave Mock USD"
+          : configuredSymbol,
   address: configuredAddress,
   decimals: configuredDecimals,
 };

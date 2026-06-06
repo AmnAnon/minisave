@@ -70,12 +70,12 @@ Supports:
 - MiniPay starter shell remains the app shell
 
 ## Stablecoin defaults
-Current build targets **cUSD first** for clarity and MiniPay fit.
+Current test build now targets a dedicated **mock USD first** flow on Celo Sepolia so MiniPay testing is not blocked by incomplete faucet infrastructure.
 
 - **Celo mainnet cUSD / StableTokenUSD**: `0x765DE816845861e75A25fCA122bb6898B8B1282a`
-- **Celo Sepolia test token (current test deployment)**: `0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b`
-- **Latest Celo Sepolia PenaltyReserve**: `0x995Ca2D73744B0Fa1942Fe5A2e10d6a709f7963f`
-- **Latest Celo Sepolia PiggyBankFactory**: `0xd3F293cfDacC5b0237232906782a8a9e9e52971e`
+- **Celo Sepolia Mock USD (testing token)**: `0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003`
+- **Latest Celo Sepolia PenaltyReserve**: `0xc8083EDeD934eDe25708AE05dD100F0A96D0B3bA`
+- **Latest Celo Sepolia PiggyBankFactory**: `0xccAaAd2041589D0c8ee1A78db75F3d071D73Cf53`
 
 These are kept in config/constants and env templates, not inline business logic.
 
