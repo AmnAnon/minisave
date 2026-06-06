@@ -13,7 +13,7 @@ contract PenaltyReserve is Ownable {
     uint256 public totalPenalties;
 
     event FactorySet(address indexed factory);
-    event PenaltyReceived(address indexed user, uint256 amount);
+    event PenaltyReceived(uint256 amount);
     event PoolMigrated(address newContract, uint256 amount);
 
     error Unauthorized();
@@ -35,7 +35,7 @@ contract PenaltyReserve is Ownable {
     function receivePenalty(uint256 amount) external {
         if (msg.sender != factory) revert Unauthorized();
         totalPenalties += amount;
-        emit PenaltyReceived(tx.origin, amount);
+        emit PenaltyReceived(amount);
     }
 
     function migrate(address newContract) external onlyOwner {

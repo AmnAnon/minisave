@@ -12,7 +12,7 @@ const configuredAddress =
 const configuredDecimals = Number(process.env.NEXT_PUBLIC_DEFAULT_TOKEN_DECIMALS || "18");
 
 export const MINISAVE_APP_NAME = "MiniSave";
-export const DEFAULT_PENALTY_BPS = 1000;
+export const DEFAULT_PENALTY_BPS = 330;
 export const FACTORY_ADDRESS = process.env.NEXT_PUBLIC_FACTORY_ADDRESS || "";
 export const PENALTY_RESERVE_ADDRESS = process.env.NEXT_PUBLIC_PENALTY_RESERVE_ADDRESS || "";
 

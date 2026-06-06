@@ -2,7 +2,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 const token = process.env.STABLE_TOKEN_ADDRESS;
 const reserveOwner = process.env.PENALTY_RESERVE_OWNER ?? process.env.DEPLOYER_ADDRESS;
-const penaltyBps = process.env.PENALTY_BPS ? BigInt(process.env.PENALTY_BPS) : 1000n;
+const penaltyBps = process.env.PENALTY_BPS ? BigInt(process.env.PENALTY_BPS) : 330n;
 
 if (!token) {
   throw new Error("STABLE_TOKEN_ADDRESS is required for PiggyBankFactory deployment");

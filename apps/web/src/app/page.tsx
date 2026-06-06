@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PiggyBank, ShieldCheck, Smartphone, AlertTriangle, ArrowRight, Sparkles, WalletCards } from "lucide-react";
+import { PiggyBank, ShieldCheck, Smartphone, AlertTriangle, ArrowRight, Sparkles, WalletCards, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserBalance } from "@/components/user-balance";
 import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
@@ -46,6 +46,11 @@ export default function Home() {
               <p className="mt-5 max-w-2xl text-base leading-7 text-amber-100/70 sm:text-lg">
                 MiniSave is a MiniPay savings vault app on Celo. It helps you lock money toward a target, stay disciplined, and track your savings journey onchain.
               </p>
+
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
+                <Gift className="h-3.5 w-3.5" />
+                Finish your vault and become eligible for v2 penalty-share rewards.
+              </div>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="min-w-44 bg-amber-500 text-black hover:bg-amber-400">

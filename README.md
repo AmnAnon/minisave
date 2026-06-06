@@ -1,6 +1,6 @@
 # MiniSave
 
-MiniSave is a MiniPay-native savings vault Mini App on Celo. Users create a savings target, deposit a stablecoin into an onchain vault, and pay a penalty if they bail out early.
+MiniSave is a MiniPay-native savings vault Mini App on Celo. Users create a savings target, deposit a stablecoin into an onchain vault, and pay a small penalty if they bail out early.
 
 ## Core hook
 **Save toward a goal. Exit early and pay for it.**
@@ -26,14 +26,15 @@ Implemented foundation:
 - PiggyBankFactory v1 contract with early-withdraw penalty
 - deploy-time token configuration
 - MiniSave landing page and create-vault flow
-- verified Celo stablecoin constants for default config
+- reserve-based penalty architecture
+- verified mock token for Sepolia testing
 
 ## Monorepo structure
 - `apps/web` — Next.js MiniPay frontend
 - `apps/contracts` — Hardhat contracts and deployment modules
-- `PRODUCT_SPEC.md` — product and submission narrative
-- `ARCHITECTURE.md` — technical plan
-- `SPRINT_48H.md` — build sprint checklist
+- `projects/minisave/PRODUCT_SPEC.md` — product and submission narrative
+- `projects/minisave/ARCHITECTURE.md` — technical plan
+- `projects/minisave/SPRINT_48H.md` — build sprint checklist
 
 ## Contract direction
 ### PiggyBankFactory
@@ -60,7 +61,7 @@ Supports:
 - deposit
 - withdraw
 - full withdrawal when goal met or deadline passed
-- penalty on early withdrawal
+- 3.3% penalty on early withdrawal
 
 ## Locked v1 decisions
 - no reward distribution logic yet
@@ -69,21 +70,32 @@ Supports:
 - token address is configurable, not hardcoded in vault logic
 - MiniPay starter shell remains the app shell
 
-## Stablecoin defaults
+## Current Sepolia testing stack
 Current test build now targets a dedicated **mock USD first** flow on Celo Sepolia so MiniPay testing is not blocked by incomplete faucet infrastructure.
 
-- **Celo mainnet cUSD / StableTokenUSD**: `0x765DE816845861e75A25fCA122bb6898B8B1282a`
 - **Celo Sepolia Mock USD (testing token)**: `0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003`
-- **Latest Celo Sepolia PenaltyReserve**: `0xc8083EDeD934eDe25708AE05dD100F0A96D0B3bA`
-- **Latest Celo Sepolia PiggyBankFactory**: `0xccAaAd2041589D0c8ee1A78db75F3d071D73Cf53`
+- **Celo Sepolia PenaltyReserve**: `0xc8083EDeD934eDe25708AE05dD100F0A96D0B3bA`
+- **Celo Sepolia PiggyBankFactory**: `0xccAaAd2041589D0c8ee1A78db75F3d071D73Cf53`
 
-These are kept in config/constants and env templates, not inline business logic.
+## Explorer and verification links
+- Mock USD verified contract:
+  <https://celo-sepolia.blockscout.com/address/0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003#code>
+- PenaltyReserve explorer:
+  <https://celo-sepolia.blockscout.com/address/0xc8083EDeD934eDe25708AE05dD100F0A96D0B3bA>
+- PiggyBankFactory explorer:
+  <https://celo-sepolia.blockscout.com/address/0xccAaAd2041589D0c8ee1A78db75F3d071D73Cf53>
+
+## Verification notes
+- `MockERC20` is verified on Celo Sepolia.
+- `PenaltyReserve` keeps penalty accounting isolated and migration-based for a cleaner v2 handoff.
+- `PiggyBankFactory` routes early-exit penalties directly into the reserve.
+- Current testing token is a mock asset for shipping velocity, not the final mainnet token choice.
 
 ## Immediate next steps
 1. complete clean MiniPay smoke test on the latest Celo Sepolia deployment
 2. verify visible portfolio positions, token balances, and transaction history links inside MiniPay
-3. update Vercel and local env with the latest reserve-backed factory deployment
-4. deploy the hardened contract to Celo mainnet
+3. capture clean submission screenshots with the latest bottom-tab UX
+4. deploy the hardened contract to Celo mainnet with final token config
 5. update Vercel env with the final mainnet factory/token config
 6. run one tiny mainnet smoke test
 7. onboard 3-5 real testers for onchain traction
@@ -97,7 +109,7 @@ These are kept in config/constants and env templates, not inline business logic.
 Stablecoin users can send and swap money, but they lack lightweight tools for disciplined saving inside a mobile-first wallet.
 
 ### Solution
-MiniSave lets MiniPay users create onchain savings vaults for a target amount. If they stay committed until the goal is hit or the deadline passes, they withdraw normally. If they exit early, they pay a penalty.
+MiniSave lets MiniPay users create onchain savings vaults for a target amount. If they stay committed until the goal is hit or the deadline passes, they withdraw normally. If they exit early, they pay a small penalty.
 
 Early-exit penalties flow into the MiniSave public penalty reserve — a transparent onchain pool. Future versions will redistribute this reserve to disciplined savers who reach their goals.
 
@@ -107,6 +119,6 @@ MiniPay users are utility-first, mobile-first, and stablecoin-native. MiniSave g
 ### Current build status
 - MiniPay-compatible frontend scaffold
 - Celo contract foundation with early exit penalty mechanic
-- stablecoin config for Celo mainnet + Celo Sepolia deployment
-- MiniPay wallet flow refactored away from RainbowKit
+- reserve-based penalty architecture for clean future reward migration
+- bottom-tab mobile navigation for MiniPay-native UX
 - live MiniPay testing in progress

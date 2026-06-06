@@ -14,7 +14,7 @@ describe("PiggyBankFactory", function () {
     const factory = await hre.viem.deployContract("PiggyBankFactory", [
       token.address,
       reserve.address,
-      1000n,
+      330n,
     ]);
     const publicClient = await hre.viem.getPublicClient();
 
@@ -70,7 +70,7 @@ describe("PiggyBankFactory", function () {
     expect(event).to.not.equal(undefined);
   });
 
-  it("applies a penalty on early withdrawal and sends it to the public reserve", async function () {
+  it("applies a 3.3 percent penalty on early withdrawal and sends it to the public reserve", async function () {
     const { factory, reserve, token, publicClient, owner } = await loadFixture(deployFixture);
 
     await factory.write.createVault(["Phone Upgrade", 1_000_000n, 0n]);
@@ -86,9 +86,9 @@ describe("PiggyBankFactory", function () {
     const reserveAfter = await token.read.balanceOf([reserve.address]);
     const totalPenalties = await reserve.read.totalPenalties();
 
-    expect(ownerAfter - ownerBefore).to.equal(450_000n);
-    expect(reserveAfter - reserveBefore).to.equal(50_000n);
-    expect(totalPenalties).to.equal(50_000n);
+    expect(ownerAfter - ownerBefore).to.equal(483_500n);
+    expect(reserveAfter - reserveBefore).to.equal(16_500n);
+    expect(totalPenalties).to.equal(16_500n);
 
     const penaltyEvent = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("PenaltyApplied(address,uint256,uint256,address)")));
     const withdrawEvent = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("Withdrawn(address,uint256,uint256,uint256,bool)")));
@@ -186,7 +186,7 @@ describe("PenaltyReserve", function () {
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
     expect(await reserve.read.totalPenalties()).to.equal(123n);
-    const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("PenaltyReceived(address,uint256)")));
+    const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("PenaltyReceived(uint256)")));
     expect(event).to.not.equal(undefined);
   });
 

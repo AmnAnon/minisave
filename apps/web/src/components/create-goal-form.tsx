@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAccount, useBalance, useWriteContract } from "wagmi";
-import { ArrowRight, CalendarClock, ChevronRight, Loader2, PiggyBank, Sparkles, Target, Wallet } from "lucide-react";
+import { ArrowRight, CalendarClock, ChevronRight, Gift, Loader2, PiggyBank, Sparkles, Target, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits, txUrl } from "@/lib/contracts";
 import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
@@ -119,12 +119,17 @@ export function CreateGoalForm() {
             </div>
             <h2 className="mt-4 text-3xl font-semibold text-amber-50">Create a vault that feels expensive to break</h2>
             <p className="mt-3 text-sm leading-6 text-amber-100/60">
-              Set a goal, define an optional unlock date, and make your future self pay a penalty if discipline breaks early.
+              Set a goal, define an optional unlock date, and make your future self pay a small penalty if discipline breaks early.
             </p>
           </div>
           <div className="hidden h-14 w-14 items-center justify-center rounded-3xl border border-amber-500/20 bg-amber-500/10 text-amber-300 sm:flex">
             <PiggyBank className="h-6 w-6" />
           </div>
+        </div>
+
+        <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
+          <Gift className="h-3.5 w-3.5" />
+          Complete this vault to qualify for v2 penalty-share rewards.
         </div>
 
         <div className="mt-6 grid gap-4 sm:gap-5">
@@ -171,6 +176,7 @@ export function CreateGoalForm() {
               <li>• Deposits use <strong>{PRIMARY_STABLE_TOKEN.symbol}</strong> only for this release.</li>
               <li>• Early exit applies a <strong>{DEFAULT_PENALTY_BPS / 100}% penalty to the public reserve</strong>.</li>
               <li>• Hit the goal or outlast the timer to unlock cleanly.</li>
+              <li>• Finish the vault and you become eligible for future reward-pool distribution in v2.</li>
             </ul>
           </div>
 
