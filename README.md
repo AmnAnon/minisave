@@ -74,16 +74,16 @@ Supports:
 Current test build now targets a dedicated **mock USD first** flow on Celo Sepolia so MiniPay testing is not blocked by incomplete faucet infrastructure.
 
 - **Celo Sepolia Mock USD (testing token)**: `0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003`
-- **Celo Sepolia PenaltyReserve**: `0xc8083EDeD934eDe25708AE05dD100F0A96D0B3bA`
-- **Celo Sepolia PiggyBankFactory**: `0xccAaAd2041589D0c8ee1A78db75F3d071D73Cf53`
+- **Celo Sepolia PenaltyReserve**: `0x739dDEb82e29a047D5c47FBf0A1871b7853a2da4`
+- **Celo Sepolia PiggyBankFactory**: `0xE919E45b4DcE6D478c1AE81a2354f86008bCdbA3`
 
 ## Explorer and verification links
 - Mock USD verified contract:
   <https://celo-sepolia.blockscout.com/address/0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003#code>
 - PenaltyReserve explorer:
-  <https://celo-sepolia.blockscout.com/address/0xc8083EDeD934eDe25708AE05dD100F0A96D0B3bA>
+  <https://celo-sepolia.blockscout.com/address/0x739dDEb82e29a047D5c47FBf0A1871b7853a2da4>
 - PiggyBankFactory explorer:
-  <https://celo-sepolia.blockscout.com/address/0xccAaAd2041589D0c8ee1A78db75F3d071D73Cf53>
+  <https://celo-sepolia.blockscout.com/address/0xE919E45b4DcE6D478c1AE81a2354f86008bCdbA3>
 
 ## Verification notes
 - `MockERC20` is verified on Celo Sepolia.
