@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { AlertTriangle, ArrowUpRight, CheckCircle2, Loader2, LockKeyhole, PiggyBank, Plus, Wallet } from "lucide-react";
@@ -39,7 +40,7 @@ function ProgressRing({ percent }: { percent: number }) {
   const offset = circumference - (percent / 100) * circumference;
 
   return (
-    <div className="relative h-20 w-20">
+    <div className="relative h-20 w-20 shrink-0">
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth={stroke} />
         <circle
@@ -97,7 +98,11 @@ function DepositPanel({
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
 
-  const { data: allowance } = useReadContract({
+  const {
+    data: allowance,
+    refetch: refetchAllowance,
+    isFetching: isFetchingAllowance,
+  } = useReadContract({
     abi: erc20Abi,
     address: PRIMARY_STABLE_TOKEN.address,
     functionName: "allowance",
@@ -108,13 +113,14 @@ function DepositPanel({
   if (!selectedVault || selectedVaultId === null) {
     return (
       <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/80 p-6 text-sm text-amber-100/60">
-        Select a position to approve, deposit, or withdraw.
+        Select a vault to approve, deposit, or withdraw.
       </div>
     );
   }
 
   const parsedAmount = amount ? toTokenUnits(amount) : 0n;
-  const needsApproval = !allowance || allowance < parsedAmount;
+  const hasAmount = Number(amount) > 0;
+  const needsApproval = parsedAmount > 0n ? (!allowance || allowance < parsedAmount) : false;
   const remaining = selectedVault.goalAmount > selectedVault.deposited ? selectedVault.goalAmount - selectedVault.deposited : 0n;
   const unlocked = vaultUnlocked(selectedVault);
   const vaultId = BigInt(selectedVaultId);
@@ -132,7 +138,7 @@ function DepositPanel({
         functionName: "approve",
         args: [factoryAddress, parsedAmount],
       });
-      setStatus(`Approval submitted: ${hash.slice(0, 10)}...`);
+      setStatus(`Approval submitted: ${hash.slice(0, 10)}... Waiting for allowance refresh...`);
       toast.success("Approval submitted.", {
         id: "vault-approve",
         action: {
@@ -140,7 +146,8 @@ function DepositPanel({
           onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
         },
       });
-      setTimeout(() => refetch(), 2500);
+      await Promise.all([refetchAllowance(), refetch()]);
+      setStatus(`Approval confirmed. You can now deposit ${PRIMARY_STABLE_TOKEN.symbol}.`);
     } catch (err) {
       const message = humanizeError(err);
       setError(message);
@@ -164,13 +171,14 @@ function DepositPanel({
       setAmount("");
       toast.success("Deposit submitted.", {
         id: "vault-deposit",
-        description: "Refreshing your portfolio position.",
+        description: "Refreshing your vaults.",
         action: {
           label: "Open tx",
           onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
         },
       });
-      setTimeout(() => refetch(), 2500);
+      await Promise.all([refetchAllowance(), refetch()]);
+      setStatus("Deposit confirmed. Portfolio refreshed.");
     } catch (err) {
       const message = humanizeError(err);
       setError(message);
@@ -199,7 +207,7 @@ function DepositPanel({
           onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
         },
       });
-      setTimeout(() => refetch(), 2500);
+      await Promise.all([refetchAllowance(), refetch()]);
     } catch (err) {
       const message = humanizeError(err);
       setError(message);
@@ -208,15 +216,15 @@ function DepositPanel({
   }
 
   return (
-    <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/90 p-6 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/40">Selected position</div>
-          <h3 className="mt-2 text-2xl font-semibold text-amber-50">{selectedVault.label}</h3>
+    <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/90 p-5 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/40">Selected vault</div>
+          <h3 className="mt-2 break-words text-2xl font-semibold text-amber-50">{selectedVault.label}</h3>
           <p className="mt-2 text-sm text-amber-100/55">
             {unlocked
-              ? "Unlocked. Exit cleanly with full balance."
-              : `Still locked. Early exit routes ${DEFAULT_PENALTY_BPS / 100}% to treasury.`}
+              ? "Unlocked. Withdraw the full balance."
+              : `Still locked. Early exit routes ${DEFAULT_PENALTY_BPS / 100}% to the public reserve.`}
           </p>
         </div>
         <ProgressRing percent={progressPercent(selectedVault)} />
@@ -237,7 +245,7 @@ function DepositPanel({
         </div>
       </div>
 
-      {!unlocked && amount && Number(amount) > 0 ? (
+      {!unlocked && hasAmount ? (
         <div className="mt-4 rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 text-sm text-amber-100/65">
           Early-exit preview: depositing {amount} {PRIMARY_STABLE_TOKEN.symbol} under a locked vault means a future break would cost roughly {formatTokenAmount(earlyPenaltyPreview)} {PRIMARY_STABLE_TOKEN.symbol} in penalty at current settings.
         </div>
@@ -255,13 +263,21 @@ function DepositPanel({
           />
         </label>
 
-        <div className="flex gap-3">
+        {hasAmount ? (
+          <p className="text-xs text-amber-100/55">
+            {needsApproval
+              ? `Step 1: approve ${amount} ${PRIMARY_STABLE_TOKEN.symbol}.`
+              : `Step 2: deposit ${amount} ${PRIMARY_STABLE_TOKEN.symbol} into this vault.`}
+          </p>
+        ) : null}
+
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Button
             onClick={needsApproval ? handleApprove : handleDeposit}
-            disabled={isPending || !amount || Number(amount) <= 0}
+            disabled={isPending || isFetchingAllowance || !hasAmount}
             className="flex-1 bg-amber-500 text-black hover:bg-amber-400"
           >
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
+            {isPending || isFetchingAllowance ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
             {needsApproval ? `Approve ${PRIMARY_STABLE_TOKEN.symbol}` : `Deposit ${PRIMARY_STABLE_TOKEN.symbol}`}
           </Button>
           <Button onClick={handleWithdraw} variant="outline" className="flex-1 border-amber-500/30 text-amber-100 hover:bg-amber-500/10">
@@ -303,7 +319,7 @@ export function VaultDashboard() {
   if (!isConnected) {
     return (
       <div className="rounded-3xl border border-amber-500/15 bg-[#0f0c08]/90 p-8 text-center text-amber-100/65">
-        Connect with MiniPay to load your live positions.
+        Connect with MiniPay to load your live vaults.
       </div>
     );
   }
@@ -325,9 +341,9 @@ export function VaultDashboard() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/45">Portfolio</div>
-          <h2 className="mt-2 text-3xl font-semibold text-amber-50">Your live vault positions</h2>
-          <p className="mt-2 text-sm text-amber-100/55">
-            Every vault created by this wallet is listed here. Approve, deposit, and exit from one panel.
+          <h2 className="mt-2 text-3xl font-semibold text-amber-50">Your live vaults</h2>
+          <p className="mt-2 max-w-2xl text-sm text-amber-100/55">
+            Every vault created by this wallet is listed here. Approve, deposit, and withdraw from one panel.
           </p>
         </div>
         <div className="flex gap-3">
@@ -335,7 +351,7 @@ export function VaultDashboard() {
             <ArrowUpRight className="mr-2 h-4 w-4" /> Refresh
           </Button>
           <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
-            <a href="/create"><Plus className="mr-2 h-4 w-4" />New vault</a>
+            <Link href="/create"><Plus className="mr-2 h-4 w-4" />New vault</Link>
           </Button>
         </div>
       </div>
@@ -345,11 +361,11 @@ export function VaultDashboard() {
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
           {isLoading ? (
-            <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/80 p-6 text-sm text-amber-100/60">Loading positions...</div>
+            <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/80 p-6 text-sm text-amber-100/60">Loading vaults...</div>
           ) : vaults.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-amber-500/20 bg-[#0f0c08]/80 p-8 text-center text-amber-100/60">
               <PiggyBank className="mx-auto mb-3 h-8 w-8 text-amber-300/70" />
-              No positions yet. Create the first vault, then come back here to manage it.
+              No vaults yet. Create the first vault, then come back here to manage it.
             </div>
           ) : (
             vaults.map((vault, index) => {
@@ -367,26 +383,26 @@ export function VaultDashboard() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-lg font-semibold text-amber-50">{vault.label}</div>
+                    <div className="min-w-0">
+                      <div className="break-words text-lg font-semibold text-amber-50">{vault.label}</div>
                       <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-amber-200/40">
                         {PRIMARY_STABLE_TOKEN.symbol} · {remainingDays === null ? "goal unlock" : `${remainingDays}d left`}
                       </div>
                     </div>
-                    <div className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
+                    <div className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
                       unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-amber-100/60"
                     }`}>
                       {unlocked ? "Unlocked" : <span className="inline-flex items-center gap-1"><LockKeyhole className="h-3 w-3" /> Locked</span>}
                     </div>
                   </div>
 
-                  <div className="mt-5 flex items-center gap-4">
+                  <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
                     <ProgressRing percent={percent} />
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="text-xl font-semibold text-amber-50">
                         {formatTokenAmount(vault.deposited)} / {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}
                       </div>
-                      <div className="mt-2 h-2 w-full min-w-40 overflow-hidden rounded-full bg-white/5">
+                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/5">
                         <div className="h-full rounded-full bg-amber-400" style={{ width: `${percent}%` }} />
                       </div>
                       <div className="mt-2 text-sm text-amber-100/55">

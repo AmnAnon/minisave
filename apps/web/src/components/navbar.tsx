@@ -25,26 +25,26 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#090704]/80 backdrop-blur-xl">
-        <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="md:hidden text-amber-100 hover:bg-amber-500/10" onClick={() => setMobileOpen(true)}>
+      <header className="sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#090704]/90 backdrop-blur-xl">
+        <div className="container flex min-h-16 max-w-screen-2xl items-center justify-between px-4 py-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button variant="ghost" size="icon" className="shrink-0 text-amber-100 hover:bg-amber-500/10 md:hidden" onClick={() => setMobileOpen(true)}>
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open menu</span>
             </Button>
 
-            <Link href="/" className="group flex items-center gap-3 transition-opacity hover:opacity-90">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300 shadow-[0_0_30px_rgba(201,168,76,0.15)]">
+            <Link href="/" className="group flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300 shadow-[0_0_30px_rgba(201,168,76,0.15)]">
                 <PiggyBank className="h-5 w-5" />
               </div>
-              <div>
-                <div className="text-sm font-semibold tracking-wide text-amber-50">{MINISAVE_APP_NAME}</div>
-                <div className="text-[10px] uppercase tracking-[0.22em] text-amber-200/45">MiniPay Savings Vaults</div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold tracking-wide text-amber-50">{MINISAVE_APP_NAME}</div>
+                <div className="truncate text-[10px] uppercase tracking-[0.18em] text-amber-200/45">MiniPay Savings Vaults</div>
               </div>
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden items-center gap-8 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -75,17 +75,17 @@ export function Navbar() {
             onClick={() => setMobileOpen(false)}
           />
           <div className="fixed left-0 top-0 z-50 h-full w-[84%] max-w-sm border-r border-amber-500/15 bg-[#090704] p-6 shadow-2xl md:hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300">
                   <PiggyBank className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="text-base font-semibold text-amber-50">{MINISAVE_APP_NAME}</div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/40">MiniPay Savings Vaults</div>
+                <div className="min-w-0">
+                  <div className="truncate text-base font-semibold text-amber-50">{MINISAVE_APP_NAME}</div>
+                  <div className="truncate text-[10px] uppercase tracking-[0.18em] text-amber-200/40">MiniPay Savings Vaults</div>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="text-amber-100 hover:bg-amber-500/10" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" size="icon" className="shrink-0 text-amber-100 hover:bg-amber-500/10" onClick={() => setMobileOpen(false)}>
                 <X className="h-5 w-5" />
               </Button>
             </div>

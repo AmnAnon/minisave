@@ -6,7 +6,7 @@ import { VaultDashboard } from "@/components/vault-dashboard";
 
 export default function PortfolioPage() {
   return (
-    <main className="container mx-auto max-w-6xl px-4 py-10 sm:py-12">
+    <main className="container mx-auto max-w-6xl px-4 pb-10 pt-6 sm:pb-12 sm:pt-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
