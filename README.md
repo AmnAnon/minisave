@@ -1,58 +1,96 @@
-# minisave-app
+# MiniSave
 
-A new Celo blockchain project
+MiniSave is a MiniPay-native savings vault Mini App on Celo. Users create a savings target, deposit a stablecoin into an onchain vault, and pay a penalty if they bail out early.
 
-A modern Celo blockchain application built with Next.js, TypeScript, and Turborepo.
+## Core hook
+**Save toward a goal. Exit early and pay for it.**
 
-## Getting Started
+That is the whole product narrative judges can understand in seconds.
 
-1. Install dependencies:
-   ```bash
-   pnpm install
-   ```
+## Why this project
+MiniPay is built for practical everyday finance, not just speculation. MiniSave fits that behavior directly:
+- simple savings goals
+- stablecoin-first UX
+- penalty-backed commitment mechanic
+- mobile-native MiniPay flow
+- transparent onchain proof
 
-2. Start the development server:
-   ```bash
-   pnpm dev
-   ```
+## Current status
+In progress for Celo Proof of Ship.
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Implemented foundation:
+- product spec
+- technical architecture
+- 48h sprint plan
+- MiniPay starter scaffold
+- PiggyBankFactory v1 contract with early-withdraw penalty
+- deploy-time token configuration
+- MiniSave landing page and create-vault flow
+- verified Celo stablecoin constants for default config
 
-## Project Structure
+## Monorepo structure
+- `apps/web` — Next.js MiniPay frontend
+- `apps/contracts` — Hardhat contracts and deployment modules
+- `PRODUCT_SPEC.md` — product and submission narrative
+- `ARCHITECTURE.md` — technical plan
+- `SPRINT_48H.md` — build sprint checklist
 
-This is a monorepo managed by Turborepo with the following structure:
+## Contract direction
+### PiggyBankFactory
+Stores user vaults directly and is configured at deploy time with:
+- stable token address
+- treasury address
+- penalty basis points
 
-- `apps/web` - Next.js application with embedded UI components and utilities
-- `apps/hardhat` - Smart contract development environment
+### Vault model
+Each user can create multiple vaults. Each vault tracks:
+- label
+- goal amount
+- deadline
+- deposited amount
+- withdrawn status
 
-## Available Scripts
+Supports:
+- create vault
+- deposit
+- withdraw
+- full withdrawal when goal met or deadline passed
+- penalty on early withdrawal
 
-- `pnpm dev` - Start development servers
-- `pnpm build` - Build all packages and apps
-- `pnpm lint` - Lint all packages and apps
-- `pnpm type-check` - Run TypeScript type checking
+## Locked v1 decisions
+- no shared penalty pool
+- no cross-user redistribution logic
+- no protocol overengineering
+- token address is configurable, not hardcoded in vault logic
+- MiniPay starter shell remains the app shell
 
-### Smart Contract Scripts
+## Stablecoin defaults
+Current frontend default:
+- `USDm` / `StableTokenUSD` on Celo mainnet: `0x765de816845861e75a25fca122bb6898b8b1282a`
+- Celo Sepolia StableTokenUSD: `0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b`
 
-- `pnpm contracts:compile` - Compile smart contracts
-- `pnpm contracts:test` - Run smart contract tests
-- `pnpm contracts:deploy` - Deploy contracts to local network
-- `pnpm contracts:deploy:celo-sepolia` - Deploy to Celo Sepolia Testnet
-- `pnpm contracts:deploy:celo` - Deploy to Celo Mainnet
+These are kept in config/constants and env templates, not inline business logic.
 
-## Tech Stack
+## Immediate next steps
+1. remove leftover GoalVault template files
+2. wire live vault reads/deposits/withdrawals in frontend
+3. deploy to Celo Sepolia
+4. test in MiniPay developer mode
+5. deploy to Celo mainnet
+6. onboard 3-5 real testers for onchain traction
 
-- **Framework**: Next.js 14 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Smart Contracts**: Hardhat with Viem
-- **Monorepo**: Turborepo
-- **Package Manager**: PNPM
+## Submission copy draft
+### Problem
+Stablecoin users can send and swap money, but they lack lightweight tools for disciplined saving inside a mobile-first wallet.
 
-## Learn More
+### Solution
+MiniSave lets MiniPay users create onchain savings vaults for a target amount. If they stay committed until the goal is hit or the deadline passes, they withdraw normally. If they exit early, they pay a penalty.
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Celo Documentation](https://docs.celo.org/)
-- [Turborepo Documentation](https://turbo.build/repo/docs)
-- [shadcn/ui Documentation](https://ui.shadcn.com/)
+### Why MiniPay users need this
+MiniPay users are utility-first, mobile-first, and stablecoin-native. MiniSave gives them a practical commitment tool that feels native to everyday financial behavior.
+
+### Current build status
+- MiniPay-compatible frontend scaffold
+- Celo contract foundation with early exit penalty mechanic
+- stablecoin config for Celo deployment
+- deploy/test flow in progress

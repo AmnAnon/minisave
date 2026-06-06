@@ -17,7 +17,7 @@ const connectors = connectorsForWallets(
     },
   ],
   {
-    appName: "minisave-app",
+    appName: "MiniSave",
     projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
   }
 );

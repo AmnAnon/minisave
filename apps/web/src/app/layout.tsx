@@ -8,8 +8,8 @@ import { WalletProvider } from "@/components/wallet-provider"
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'minisave-app',
-  description: 'A new Celo blockchain project',
+  title: 'MiniSave',
+  description: 'MiniPay-native savings goals on Celo',
 };
 
 export default function RootLayout({
