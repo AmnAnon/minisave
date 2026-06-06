@@ -1,4 +1,4 @@
-import { parseUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import { FACTORY_ADDRESS, PRIMARY_STABLE_TOKEN } from "./minisave";
 
 export const piggyBankFactoryAbi = [
@@ -76,6 +76,16 @@ export const erc20Abi = [
     ],
     outputs: [{ name: "", type: "bool" }],
   },
+  {
+    type: "function",
+    name: "allowance",
+    stateMutability: "view",
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
 ] as const;
 
 export type VaultView = {
@@ -90,6 +100,33 @@ export function toTokenUnits(value: string, decimals = PRIMARY_STABLE_TOKEN.deci
   return parseUnits(value || "0", decimals);
 }
 
+export function fromTokenUnits(value: bigint, decimals = PRIMARY_STABLE_TOKEN.decimals) {
+  return Number(formatUnits(value, decimals));
+}
+
+export function formatTokenAmount(value: bigint, decimals = PRIMARY_STABLE_TOKEN.decimals, precision = 2) {
+  return fromTokenUnits(value, decimals).toLocaleString(undefined, {
+    maximumFractionDigits: precision,
+  });
+}
+
 export function resolveFactoryAddress() {
   return FACTORY_ADDRESS as `0x${string}` | "";
+}
+
+export function progressPercent(vault: VaultView) {
+  const goal = fromTokenUnits(vault.goalAmount);
+  const deposited = fromTokenUnits(vault.deposited);
+  if (!goal) return 0;
+  return Math.min(100, (deposited / goal) * 100);
+}
+
+export function vaultUnlocked(vault: VaultView) {
+  return vault.deposited >= vault.goalAmount || (vault.deadline !== 0n && BigInt(Math.floor(Date.now() / 1000)) >= vault.deadline);
+}
+
+export function daysLeft(deadline: bigint) {
+  if (deadline === 0n) return null;
+  const diffMs = Number(deadline) * 1000 - Date.now();
+  return Math.max(0, Math.ceil(diffMs / 86_400_000));
 }
