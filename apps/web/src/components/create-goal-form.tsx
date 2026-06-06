@@ -115,7 +115,7 @@ export function CreateGoalForm() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">
-              <Sparkles className="h-3.5 w-3.5" /> Premium vault setup
+              <Sparkles className="h-3.5 w-3.5" /> Penalty-backed setup
             </div>
             <h2 className="mt-4 text-3xl font-semibold text-amber-50">Create a vault that feels expensive to break</h2>
             <p className="mt-3 text-sm leading-6 text-amber-100/60">
@@ -169,7 +169,7 @@ export function CreateGoalForm() {
             </div>
             <ul className="space-y-2 leading-6">
               <li>• Deposits use <strong>{PRIMARY_STABLE_TOKEN.symbol}</strong> only for this release.</li>
-              <li>• Early exit applies a <strong>{DEFAULT_PENALTY_BPS / 100}% treasury penalty</strong>.</li>
+              <li>• Early exit applies a <strong>{DEFAULT_PENALTY_BPS / 100}% penalty to the public reserve</strong>.</li>
               <li>• Hit the goal or outlast the timer to unlock cleanly.</li>
             </ul>
           </div>
@@ -183,7 +183,7 @@ export function CreateGoalForm() {
               Create vault on Celo
             </Button>
             <Button asChild variant="outline" className="h-12 flex-1 border-amber-500/25 text-amber-100 hover:bg-amber-500/10">
-              <Link href="/">
+              <Link href="/portfolio">
                 Open portfolio
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>

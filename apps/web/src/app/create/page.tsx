@@ -11,7 +11,7 @@ export default function CreateGoalPage() {
         </div>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-amber-50 sm:text-4xl">Set the target. Fund the vault. Track the climb.</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-amber-100/60">
-          Create a disciplined savings vault for a specific goal, optionally lock it behind time, and manage the position later from Portfolio.
+          Create a disciplined savings vault for a specific goal, set an optional unlock date, and manage your vaults from Portfolio.
         </p>
       </div>
 

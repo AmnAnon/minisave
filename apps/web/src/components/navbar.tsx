@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, ExternalLink, PiggyBank, Sparkles, X } from "lucide-react";
+import { Menu, PiggyBank, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@/components/connect-button";
@@ -13,7 +13,6 @@ const navLinks = [
   { name: "Home", href: "/" },
   { name: "Create Vault", href: "/create" },
   { name: "Portfolio", href: "/portfolio" },
-  { name: "Celo Docs", href: "https://docs.celo.org", external: true },
 ];
 
 export function Navbar() {
@@ -50,14 +49,11 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                target={link.external ? "_blank" : undefined}
-                rel={link.external ? "noopener noreferrer" : undefined}
                 className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
                   pathname === link.href ? "text-amber-300" : "text-amber-100/65 hover:text-amber-50"
                 }`}
               >
                 {link.name}
-                {link.external ? <ExternalLink className="h-4 w-4" /> : null}
               </Link>
             ))}
 
@@ -86,7 +82,7 @@ export function Navbar() {
                 </div>
                 <div>
                   <div className="text-base font-semibold text-amber-50">{MINISAVE_APP_NAME}</div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/40">Discipline vaults</div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/40">MiniPay Savings Vaults</div>
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="text-amber-100 hover:bg-amber-500/10" onClick={() => setMobileOpen(false)}>
@@ -99,8 +95,6 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  target={link.external ? "_blank" : undefined}
-                  rel={link.external ? "noopener noreferrer" : undefined}
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center justify-between rounded-2xl border px-4 py-4 text-base font-medium transition ${
                     pathname === link.href
@@ -109,7 +103,6 @@ export function Navbar() {
                   }`}
                 >
                   <span>{link.name}</span>
-                  {link.external ? <ExternalLink className="h-4 w-4" /> : null}
                 </Link>
               ))}
             </nav>
