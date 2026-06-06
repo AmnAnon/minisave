@@ -39,8 +39,13 @@ Implemented foundation:
 ### PiggyBankFactory
 Stores user vaults directly and is configured at deploy time with:
 - stable token address
-- treasury address
+- penalty reserve address
 - penalty basis points
+
+### PenaltyReserve
+A minimal standalone reserve contract that receives early-exit penalties and keeps them in a transparent onchain pool.
+
+Early-exit penalties flow into the MiniSave public penalty reserve — a transparent onchain pool. Future versions will redistribute this reserve to disciplined savers who reach their goals.
 
 ### Vault model
 Each user can create multiple vaults. Each vault tracks:
@@ -58,9 +63,9 @@ Supports:
 - penalty on early withdrawal
 
 ## Locked v1 decisions
-- no shared penalty pool
-- no cross-user redistribution logic
-- no protocol overengineering
+- no reward distribution logic yet
+- no proxy upgrade pattern
+- minimal migration-based reserve architecture only
 - token address is configurable, not hardcoded in vault logic
 - MiniPay starter shell remains the app shell
 
@@ -80,12 +85,18 @@ These are kept in config/constants and env templates, not inline business logic.
 5. run one tiny mainnet smoke test
 6. onboard 3-5 real testers for onchain traction
 
+## Roadmap
+- v2: RewardDistributor contract — users who reach their savings goal or survive their deadline become eligible for a proportional share of the penalty pool, weighted by deposited amount.
+- future yield mode: route locked stablecoin deposits into conservative Celo-native yield strategies while preserving simple penalty mechanics.
+
 ## Submission copy draft
 ### Problem
 Stablecoin users can send and swap money, but they lack lightweight tools for disciplined saving inside a mobile-first wallet.
 
 ### Solution
 MiniSave lets MiniPay users create onchain savings vaults for a target amount. If they stay committed until the goal is hit or the deadline passes, they withdraw normally. If they exit early, they pay a penalty.
+
+Early-exit penalties flow into the MiniSave public penalty reserve — a transparent onchain pool. Future versions will redistribute this reserve to disciplined savers who reach their goals.
 
 ### Why MiniPay users need this
 MiniPay users are utility-first, mobile-first, and stablecoin-native. MiniSave gives them a practical commitment tool that feels native to everyday financial behavior.

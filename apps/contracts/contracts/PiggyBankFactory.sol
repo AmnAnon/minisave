@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {PenaltyReserve} from "./PenaltyReserve.sol";
 
 contract PiggyBankFactory is ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -19,7 +20,7 @@ contract PiggyBankFactory is ReentrancyGuard {
     }
 
     address public immutable token;
-    address public immutable treasury;
+    address public immutable penaltyReserve;
     uint256 public immutable penaltyBps;
 
     mapping(address => Vault[]) private vaultsByOwner;
@@ -32,7 +33,7 @@ contract PiggyBankFactory is ReentrancyGuard {
         uint256 deadline
     );
     event Deposited(address indexed owner, uint256 indexed vaultId, uint256 amount, uint256 totalDeposited);
-    event PenaltyApplied(address indexed owner, uint256 indexed vaultId, uint256 penaltyAmount, address treasury);
+    event PenaltyApplied(address indexed owner, uint256 indexed vaultId, uint256 penaltyAmount, address reserve);
     event Withdrawn(
         address indexed owner,
         uint256 indexed vaultId,
@@ -49,12 +50,12 @@ contract PiggyBankFactory is ReentrancyGuard {
     error VaultNotFound();
     error VaultClosed();
 
-    constructor(address _token, address _treasury, uint256 _penaltyBps) {
-        if (_token == address(0) || _treasury == address(0)) revert InvalidAddress();
+    constructor(address _token, address _penaltyReserve, uint256 _penaltyBps) {
+        if (_token == address(0) || _penaltyReserve == address(0)) revert InvalidAddress();
         if (_penaltyBps > BPS_DENOMINATOR) revert InvalidPenaltyBps();
 
         token = _token;
-        treasury = _treasury;
+        penaltyReserve = _penaltyReserve;
         penaltyBps = _penaltyBps;
     }
 
@@ -108,8 +109,9 @@ contract PiggyBankFactory is ReentrancyGuard {
             penaltyAmount = (vault.deposited * penaltyBps) / BPS_DENOMINATOR;
             userAmount = vault.deposited - penaltyAmount;
             if (penaltyAmount > 0) {
-                IERC20(token).safeTransfer(treasury, penaltyAmount);
-                emit PenaltyApplied(msg.sender, vaultId, penaltyAmount, treasury);
+                IERC20(token).safeTransfer(penaltyReserve, penaltyAmount);
+                PenaltyReserve(penaltyReserve).receivePenalty(penaltyAmount);
+                emit PenaltyApplied(msg.sender, vaultId, penaltyAmount, penaltyReserve);
             }
         }
 
