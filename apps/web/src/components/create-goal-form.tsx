@@ -127,51 +127,49 @@ export function CreateGoalForm() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-5">
-          <label className="grid gap-2 text-sm font-medium text-amber-100/75">
-            Vault title
+        <div className="mt-6 grid gap-4 sm:gap-5">
+          <label className="grid gap-2 rounded-[26px] border border-amber-500/12 bg-black/15 p-4 text-sm font-medium text-amber-100/75 sm:p-5">
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Vault title</span>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-13 rounded-2xl border border-amber-500/15 bg-black/20 px-4 text-amber-50 outline-none"
+              className="h-12 rounded-2xl border border-amber-500/15 bg-black/30 px-4 text-base text-amber-50 outline-none transition focus:border-amber-400/40 focus:bg-black/40"
               placeholder="Emergency Fund"
             />
           </label>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <label className="grid gap-2 text-sm font-medium text-amber-100/75">
-              Target amount ({PRIMARY_STABLE_TOKEN.symbol})
+          <label className="grid gap-2 rounded-[26px] border border-amber-500/12 bg-black/15 p-4 text-sm font-medium text-amber-100/75 sm:p-5">
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Target amount ({PRIMARY_STABLE_TOKEN.symbol})</span>
+            <input
+              value={targetAmount}
+              onChange={(e) => setTargetAmount(e.target.value)}
+              className="h-12 rounded-2xl border border-amber-500/15 bg-black/30 px-4 text-base text-amber-50 outline-none transition focus:border-amber-400/40 focus:bg-black/40"
+              placeholder="50"
+              inputMode="decimal"
+            />
+          </label>
+
+          <label className="grid gap-2 rounded-[26px] border border-amber-500/12 bg-black/15 p-4 text-sm font-medium text-amber-100/75 sm:p-5">
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Deadline (optional)</span>
+            <div className="flex h-12 items-center gap-3 rounded-2xl border border-amber-500/15 bg-black/30 px-4 text-amber-50 transition focus-within:border-amber-400/40 focus-within:bg-black/40">
+              <CalendarClock className="h-4 w-4 shrink-0 text-amber-200/50" />
               <input
-                value={targetAmount}
-                onChange={(e) => setTargetAmount(e.target.value)}
-                className="h-13 rounded-2xl border border-amber-500/15 bg-black/20 px-4 text-amber-50 outline-none"
-                placeholder="50"
-                inputMode="decimal"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                type="date"
+                className="w-full bg-transparent text-base outline-none"
               />
-            </label>
+            </div>
+          </label>
 
-            <label className="grid gap-2 text-sm font-medium text-amber-100/75">
-              Deadline (optional)
-              <div className="flex h-13 items-center gap-2 rounded-2xl border border-amber-500/15 bg-black/20 px-4 text-amber-50">
-                <CalendarClock className="h-4 w-4 text-amber-200/50" />
-                <input
-                  value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
-                  type="date"
-                  className="w-full bg-transparent outline-none"
-                />
-              </div>
-            </label>
-          </div>
-
-          <div className="grid gap-4 rounded-3xl border border-dashed border-amber-500/20 bg-amber-500/[0.03] p-5 text-sm text-amber-100/65">
+          <div className="grid gap-3 rounded-[26px] border border-amber-500/12 bg-[#151008]/95 p-5 text-sm text-amber-100/65">
             <div className="flex items-center gap-2 font-medium text-amber-50">
               <Target className="h-4 w-4 text-emerald-400" />
               Live vault terms
             </div>
-            <ul className="space-y-2">
+            <ul className="space-y-2 leading-6">
               <li>• Deposits use <strong>{PRIMARY_STABLE_TOKEN.symbol}</strong> only for this release.</li>
-              <li>• Early exit burns discipline with a <strong>{DEFAULT_PENALTY_BPS / 100}% treasury penalty</strong>.</li>
+              <li>• Early exit applies a <strong>{DEFAULT_PENALTY_BPS / 100}% treasury penalty</strong>.</li>
               <li>• Hit the goal or outlast the timer to unlock cleanly.</li>
             </ul>
           </div>
