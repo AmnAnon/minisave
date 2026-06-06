@@ -2,7 +2,6 @@ import Link from "next/link";
 import { PiggyBank, ShieldCheck, Smartphone, AlertTriangle, ArrowRight, Sparkles, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserBalance } from "@/components/user-balance";
-import { VaultDashboard } from "@/components/vault-dashboard";
 import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 
 const features = [
@@ -13,12 +12,12 @@ const features = [
   },
   {
     title: "MiniPay-native flow",
-    description: "Built for the MiniPay shell with wallet injection, fast mobile actions, and a cleaner portfolio-first UX.",
+    description: "Built for the MiniPay shell with wallet injection, fast mobile actions, and a cleaner mobile-first UX.",
     icon: Smartphone,
   },
   {
     title: "Onchain vault positions",
-    description: `Every vault is a visible live position on Celo, funded with ${PRIMARY_STABLE_TOKEN.symbol} in this release.`,
+    description: `Every vault becomes a visible live position on Celo, funded with ${PRIMARY_STABLE_TOKEN.symbol} in this release.`,
     icon: ShieldCheck,
   },
 ];
@@ -39,13 +38,13 @@ export default function Home() {
             <div>
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-amber-200">
                 <Sparkles className="h-3.5 w-3.5" />
-                What MiniSave does
+                Home
               </div>
               <h1 className="text-4xl font-semibold tracking-tight text-amber-50 sm:text-5xl">
                 Save for a goal. Break early and <span className="text-amber-400">pay for it</span>.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-amber-100/70 sm:text-lg">
-                MiniSave is a MiniPay savings vault app on Celo. It helps you lock money toward a target, track your position onchain, and add real discipline through an early-exit penalty.
+                MiniSave is a MiniPay savings vault app on Celo. It helps you lock money toward a target, stay disciplined, and track your savings journey onchain.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -56,7 +55,7 @@ export default function Home() {
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="min-w-44 border-amber-500/30 text-amber-100 hover:bg-amber-500/10">
-                  <Link href="/create">Start Saving</Link>
+                  <Link href="/portfolio">Open Portfolio</Link>
                 </Button>
               </div>
             </div>
@@ -67,7 +66,7 @@ export default function Home() {
                   <WalletCards className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/45">First screen explainer</div>
+                  <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/45">What this app does</div>
                   <div className="mt-1 text-lg font-semibold text-amber-50">A MiniPay vault for disciplined saving</div>
                 </div>
               </div>
@@ -109,7 +108,23 @@ export default function Home() {
       </section>
 
       <section className="container mx-auto max-w-6xl px-4 pb-16">
-        <VaultDashboard />
+        <div className="rounded-[28px] border border-amber-500/10 bg-[#0f0c08]/80 p-6 sm:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/45">Next step</div>
+              <h2 className="mt-2 text-2xl font-semibold text-amber-50">Ready to start or manage your vaults?</h2>
+              <p className="mt-2 text-sm text-amber-100/60">Use Create to open a new vault, then switch to Portfolio to approve, deposit, and track progress.</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
+                <Link href="/create">Create Vault</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-amber-500/30 text-amber-100 hover:bg-amber-500/10">
+                <Link href="/portfolio">Open Portfolio</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   );

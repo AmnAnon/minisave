@@ -10,8 +10,9 @@ import { ConnectButton } from "@/components/connect-button";
 import { MINISAVE_APP_NAME } from "@/lib/minisave";
 
 const navLinks = [
-  { name: "Portfolio", href: "/" },
+  { name: "Home", href: "/" },
   { name: "Create Vault", href: "/create" },
+  { name: "Portfolio", href: "/portfolio" },
   { name: "Celo Docs", href: "https://docs.celo.org", external: true },
 ];
 

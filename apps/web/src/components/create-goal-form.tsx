@@ -89,7 +89,7 @@ export function CreateGoalForm() {
         args: [title.trim(), toTokenUnits(targetAmount), dateToUnixTimestamp(deadline)],
       });
 
-      const success = `Vault created. Tx: ${hash.slice(0, 10)}... Returning to home.`;
+      const success = `Vault created. Tx: ${hash.slice(0, 10)}... Opening portfolio.`;
       setStatus(success);
       toast.success("Vault created successfully.", {
         id: "create-vault",
@@ -100,7 +100,7 @@ export function CreateGoalForm() {
         },
       });
       setTimeout(() => {
-        router.push("/");
+        router.push("/portfolio");
       }, 1200);
     } catch (err) {
       const message = humanizeError(err);
