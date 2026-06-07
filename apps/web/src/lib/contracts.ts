@@ -32,6 +32,28 @@ export const piggyBankFactoryAbi = [
   },
   {
     type: "function",
+    name: "getVault",
+    stateMutability: "view",
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "vaultId", type: "uint256" },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        components: [
+          { name: "label", type: "string" },
+          { name: "goalAmount", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+          { name: "deposited", type: "uint256" },
+          { name: "withdrawn", type: "bool" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "function",
     name: "getVaults",
     stateMutability: "view",
     inputs: [{ name: "owner", type: "address" }],

@@ -3,8 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
-import { AlertTriangle, ArrowUpRight, CheckCircle2, Loader2, LockKeyhole, PiggyBank, Plus, Wallet } from "lucide-react";
+import { useAccount, useReadContract, useReadContracts, useWriteContract } from "wagmi";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  ExternalLink,
+  Loader2,
+  LockKeyhole,
+  PiggyBank,
+  Plus,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   daysLeft,
@@ -20,6 +32,15 @@ import {
 } from "@/lib/contracts";
 import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 
+type VaultRecord = VaultView & { vaultId: number };
+
+type TxBannerState = {
+  kind: "idle" | "pending" | "success" | "error";
+  title: string;
+  detail?: string;
+  txHash?: string;
+};
+
 function shortDate(deadline: bigint) {
   if (deadline === 0n) return "No deadline";
   return new Date(Number(deadline) * 1000).toLocaleDateString();
@@ -27,8 +48,12 @@ function shortDate(deadline: bigint) {
 
 function humanizeError(err: unknown) {
   const message = err instanceof Error ? err.message : "Transaction failed.";
-  if (message.toLowerCase().includes("user rejected")) return "Transaction rejected in wallet.";
-  if (message.toLowerCase().includes("insufficient funds")) return "Not enough balance or gas for this action.";
+  const lowered = message.toLowerCase();
+  if (lowered.includes("user rejected")) return "Transaction rejected in wallet.";
+  if (lowered.includes("insufficient funds")) return "Not enough balance or gas for this action.";
+  if (lowered.includes("0x2c5211c6") || lowered.includes("execution reverted")) {
+    return "This vault cannot be withdrawn in its current state. It may already be closed, empty, or the selected vault id was stale before refresh.";
+  }
   return message;
 }
 
@@ -60,7 +85,7 @@ function ProgressRing({ percent }: { percent: number }) {
   );
 }
 
-function StatsBar({ vaults }: { vaults: VaultView[] }) {
+function StatsBar({ vaults }: { vaults: VaultRecord[] }) {
   const totalDeposited = vaults.reduce((sum, vault) => sum + vault.deposited, 0n);
   const totalTarget = vaults.reduce((sum, vault) => sum + vault.goalAmount, 0n);
   const completed = vaults.filter((vault) => vault.deposited >= vault.goalAmount).length;
@@ -82,20 +107,65 @@ function StatsBar({ vaults }: { vaults: VaultView[] }) {
   );
 }
 
-function DepositPanel({
+function TxBanner({ tx }: { tx: TxBannerState }) {
+  if (tx.kind === "idle") return null;
+
+  const palette = {
+    pending: "border-amber-400/30 bg-[linear-gradient(135deg,rgba(201,168,76,0.16),rgba(201,168,76,0.05))] text-amber-50",
+    success: "border-emerald-400/30 bg-[linear-gradient(135deg,rgba(27,151,94,0.22),rgba(27,151,94,0.08))] text-emerald-50",
+    error: "border-red-400/30 bg-[linear-gradient(135deg,rgba(180,38,38,0.22),rgba(180,38,38,0.08))] text-red-50",
+  } as const;
+
+  const icon = tx.kind === "pending"
+    ? <Loader2 className="h-5 w-5 animate-spin" />
+    : tx.kind === "success"
+      ? <CheckCircle2 className="h-5 w-5" />
+      : <AlertTriangle className="h-5 w-5" />;
+
+  return (
+    <div className={`sticky top-20 z-20 overflow-hidden rounded-[26px] border p-4 shadow-[0_18px_55px_rgba(0,0,0,0.28)] backdrop-blur-xl ${palette[tx.kind]}`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_30%)]" />
+      <div className="relative flex items-start gap-3">
+        <div className="mt-0.5 rounded-2xl border border-white/10 bg-black/15 p-2">{icon}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">
+            <Sparkles className="h-3.5 w-3.5" />
+            Transaction status
+          </div>
+          <div className="mt-1 text-base font-semibold">{tx.title}</div>
+          {tx.detail ? <div className="mt-1 text-sm text-white/72">{tx.detail}</div> : null}
+        </div>
+        {tx.txHash ? (
+          <a
+            href={txUrl(tx.txHash)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white/90 transition hover:bg-white/15"
+          >
+            Open tx
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function VaultActionPanel({
   selectedVault,
-  selectedVaultId,
   refetch,
+  txState,
+  setTxState,
 }: {
-  selectedVault: VaultView | null;
-  selectedVaultId: number | null;
+  selectedVault: VaultRecord;
   refetch: () => void;
+  txState: TxBannerState;
+  setTxState: (state: TxBannerState) => void;
 }) {
   const { address } = useAccount();
   const factoryAddress = resolveFactoryAddress();
   const { writeContractAsync, isPending } = useWriteContract();
   const [amount, setAmount] = useState("");
-  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
 
   const {
@@ -110,26 +180,23 @@ function DepositPanel({
     query: { enabled: Boolean(address && factoryAddress) },
   });
 
-  if (!selectedVault || selectedVaultId === null) {
-    return (
-      <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/80 p-6 text-sm text-amber-100/60">
-        Select a vault to approve, deposit, or withdraw.
-      </div>
-    );
-  }
-
   const parsedAmount = amount ? toTokenUnits(amount) : 0n;
   const hasAmount = Number(amount) > 0;
   const needsApproval = parsedAmount > 0n ? (!allowance || allowance < parsedAmount) : false;
   const remaining = selectedVault.goalAmount > selectedVault.deposited ? selectedVault.goalAmount - selectedVault.deposited : 0n;
   const unlocked = vaultUnlocked(selectedVault);
-  const vaultId = BigInt(selectedVaultId);
+  const vaultId = BigInt(selectedVault.vaultId);
   const earlyPenaltyPreview = (parsedAmount * BigInt(DEFAULT_PENALTY_BPS)) / 10_000n;
+  const isClosed = selectedVault.withdrawn;
 
   async function handleApprove() {
     if (!factoryAddress || !parsedAmount) return;
-    setStatus("Waiting for token approval...");
     setError("");
+    setTxState({
+      kind: "pending",
+      title: `Approving ${amount} ${PRIMARY_STABLE_TOKEN.symbol}`,
+      detail: "Waiting for wallet confirmation and allowance refresh.",
+    });
     toast.loading("Confirm token approval in your wallet...", { id: "vault-approve" });
     try {
       const hash = await writeContractAsync({
@@ -138,7 +205,12 @@ function DepositPanel({
         functionName: "approve",
         args: [factoryAddress, parsedAmount],
       });
-      setStatus(`Approval submitted: ${hash.slice(0, 10)}... Waiting for allowance refresh...`);
+      setTxState({
+        kind: "success",
+        title: "Approval submitted",
+        detail: `Allowance refreshed for ${amount} ${PRIMARY_STABLE_TOKEN.symbol}. You can deposit now.`,
+        txHash: hash,
+      });
       toast.success("Approval submitted.", {
         id: "vault-approve",
         action: {
@@ -147,18 +219,22 @@ function DepositPanel({
         },
       });
       await Promise.all([refetchAllowance(), refetch()]);
-      setStatus(`Approval confirmed. You can now deposit ${PRIMARY_STABLE_TOKEN.symbol}.`);
     } catch (err) {
       const message = humanizeError(err);
       setError(message);
+      setTxState({ kind: "error", title: "Approval failed", detail: message });
       toast.error(message, { id: "vault-approve" });
     }
   }
 
   async function handleDeposit() {
     if (!factoryAddress || !parsedAmount) return;
-    setStatus("Waiting for deposit confirmation...");
     setError("");
+    setTxState({
+      kind: "pending",
+      title: `Depositing into ${selectedVault.label}`,
+      detail: `Submitting ${amount} ${PRIMARY_STABLE_TOKEN.symbol} to vault #${selectedVault.vaultId}.`,
+    });
     toast.loading("Confirm deposit in your wallet...", { id: "vault-deposit" });
     try {
       const hash = await writeContractAsync({
@@ -167,7 +243,6 @@ function DepositPanel({
         functionName: "deposit",
         args: [vaultId, parsedAmount],
       });
-      setStatus(`Deposit submitted: ${hash.slice(0, 10)}...`);
       setAmount("");
       toast.success("Deposit submitted.", {
         id: "vault-deposit",
@@ -178,18 +253,30 @@ function DepositPanel({
         },
       });
       await Promise.all([refetchAllowance(), refetch()]);
-      setStatus("Deposit confirmed. Portfolio refreshed.");
+      setTxState({
+        kind: "success",
+        title: "Deposit confirmed",
+        detail: `Vault #${selectedVault.vaultId} refreshed with the latest balance.`,
+        txHash: hash,
+      });
     } catch (err) {
       const message = humanizeError(err);
       setError(message);
+      setTxState({ kind: "error", title: "Deposit failed", detail: message });
       toast.error(message, { id: "vault-deposit" });
     }
   }
 
   async function handleWithdraw() {
-    if (!factoryAddress) return;
-    setStatus("Waiting for withdrawal confirmation...");
+    if (!factoryAddress || isClosed) return;
     setError("");
+    setTxState({
+      kind: "pending",
+      title: unlocked ? "Processing clean withdrawal" : "Processing early exit",
+      detail: unlocked
+        ? `Submitting full withdrawal from vault #${selectedVault.vaultId}.`
+        : `Submitting early withdrawal from vault #${selectedVault.vaultId} at ${DEFAULT_PENALTY_BPS / 100}% penalty.`,
+    });
     toast.loading(unlocked ? "Confirm withdrawal in your wallet..." : "Confirm early exit in your wallet...", { id: "vault-withdraw" });
     try {
       const hash = await writeContractAsync({
@@ -198,7 +285,6 @@ function DepositPanel({
         functionName: "withdraw",
         args: [vaultId],
       });
-      setStatus(`Withdrawal submitted: ${hash.slice(0, 10)}...`);
       toast.success(unlocked ? "Withdrawal submitted." : "Early withdrawal submitted.", {
         id: "vault-withdraw",
         description: unlocked ? "Full amount should return to your wallet." : `Penalty remains ${DEFAULT_PENALTY_BPS / 100}% while locked.`,
@@ -208,38 +294,47 @@ function DepositPanel({
         },
       });
       await Promise.all([refetchAllowance(), refetch()]);
+      setTxState({
+        kind: "success",
+        title: unlocked ? "Withdrawal confirmed" : "Early exit confirmed",
+        detail: unlocked ? "Vault balance returned cleanly." : "Penalty routed to the public reserve and portfolio refreshed.",
+        txHash: hash,
+      });
     } catch (err) {
       const message = humanizeError(err);
       setError(message);
+      setTxState({ kind: "error", title: "Withdrawal failed", detail: message });
       toast.error(message, { id: "vault-withdraw" });
     }
   }
 
   return (
-    <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/90 p-5 shadow-sm sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="mt-4 overflow-hidden rounded-[28px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(201,168,76,0.08),rgba(15,12,8,0.96))] p-5 shadow-[0_12px_40px_rgba(0,0,0,0.2)]">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/40">Selected vault</div>
+          <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/40">Selected vault actions</div>
           <h3 className="mt-2 break-words text-2xl font-semibold text-amber-50">{selectedVault.label}</h3>
-          <p className="mt-2 text-sm text-amber-100/55">
-            {unlocked
-              ? "Unlocked. Withdraw the full balance."
-              : `Still locked. Early exit routes ${DEFAULT_PENALTY_BPS / 100}% to the public reserve.`}
+          <p className="mt-2 text-sm text-amber-100/58">
+            {isClosed
+              ? "This vault is already closed. Select another live vault to continue."
+              : unlocked
+                ? "Unlocked. You can withdraw the full balance cleanly."
+                : `Locked. Deposits stay live here, and early exit routes ${DEFAULT_PENALTY_BPS / 100}% to the public reserve.`}
           </p>
         </div>
         <ProgressRing percent={progressPercent(selectedVault)} />
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-amber-500/10 bg-amber-500/[0.03] p-4">
+      <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Saved</div>
           <div className="mt-2 text-lg font-semibold text-amber-50">{formatTokenAmount(selectedVault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
         </div>
-        <div className="rounded-2xl border border-amber-500/10 bg-amber-500/[0.03] p-4">
+        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Remaining</div>
           <div className="mt-2 text-lg font-semibold text-amber-50">{formatTokenAmount(remaining)} {PRIMARY_STABLE_TOKEN.symbol}</div>
         </div>
-        <div className="rounded-2xl border border-amber-500/10 bg-amber-500/[0.03] p-4">
+        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Deadline</div>
           <div className="mt-2 text-lg font-semibold text-amber-50">{shortDate(selectedVault.deadline)}</div>
         </div>
@@ -251,44 +346,54 @@ function DepositPanel({
         </div>
       ) : null}
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <label className="grid gap-2 text-sm font-medium text-amber-100/80">
           Deposit amount ({PRIMARY_STABLE_TOKEN.symbol})
           <input
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
-            className="h-12 rounded-xl border border-amber-500/15 bg-black/20 px-4 text-amber-50 outline-none"
+            className="h-12 rounded-xl border border-amber-500/15 bg-black/20 px-4 text-amber-50 outline-none transition focus:border-amber-400/40"
             placeholder="10"
             inputMode="decimal"
+            disabled={isClosed}
           />
+          {hasAmount ? (
+            <p className="text-xs text-amber-100/55">
+              {needsApproval
+                ? `Step 1: approve ${amount} ${PRIMARY_STABLE_TOKEN.symbol}.`
+                : `Step 2: deposit ${amount} ${PRIMARY_STABLE_TOKEN.symbol} into vault #${selectedVault.vaultId}.`}
+            </p>
+          ) : null}
         </label>
 
-        {hasAmount ? (
-          <p className="text-xs text-amber-100/55">
-            {needsApproval
-              ? `Step 1: approve ${amount} ${PRIMARY_STABLE_TOKEN.symbol}.`
-              : `Step 2: deposit ${amount} ${PRIMARY_STABLE_TOKEN.symbol} into this vault.`}
-          </p>
-        ) : null}
-
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="grid gap-3 self-end sm:grid-cols-2">
           <Button
             onClick={needsApproval ? handleApprove : handleDeposit}
-            disabled={isPending || isFetchingAllowance || !hasAmount}
-            className="flex-1 bg-amber-500 text-black hover:bg-amber-400"
+            disabled={isPending || isFetchingAllowance || !hasAmount || isClosed}
+            className="h-12 w-full bg-amber-500 text-black hover:bg-amber-400"
           >
             {isPending || isFetchingAllowance ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
             {needsApproval ? `Approve ${PRIMARY_STABLE_TOKEN.symbol}` : `Deposit ${PRIMARY_STABLE_TOKEN.symbol}`}
           </Button>
-          <Button onClick={handleWithdraw} variant="outline" className="flex-1 border-amber-500/30 text-amber-100 hover:bg-amber-500/10">
+          <Button
+            onClick={handleWithdraw}
+            disabled={isPending || isClosed || selectedVault.deposited === 0n}
+            variant="outline"
+            className="h-12 w-full border-amber-500/30 text-amber-100 hover:bg-amber-500/10"
+          >
             {unlocked ? <CheckCircle2 className="mr-2 h-4 w-4" /> : <AlertTriangle className="mr-2 h-4 w-4" />}
-            {unlocked ? "Withdraw" : `Break early (-${DEFAULT_PENALTY_BPS / 100}%)`}
+            {unlocked ? "Withdraw cleanly" : `Break early (-${DEFAULT_PENALTY_BPS / 100}%)`}
           </Button>
         </div>
-
-        {status ? <p className="text-sm text-emerald-400">{status}</p> : null}
-        {error ? <p className="text-sm text-red-400">{error}</p> : null}
       </div>
+
+      {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
+      {txState.kind === "pending" ? (
+        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-200">
+          <Clock3 className="h-3.5 w-3.5" />
+          Processing onchain…
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -296,25 +401,59 @@ function DepositPanel({
 export function VaultDashboard() {
   const { address, isConnected } = useAccount();
   const [selectedVaultId, setSelectedVaultId] = useState<number | null>(null);
+  const [txState, setTxState] = useState<TxBannerState>({ kind: "idle", title: "" });
   const factoryAddress = resolveFactoryAddress();
 
-  const { data, isLoading, refetch } = useReadContract({
+  const { data: countData, isLoading: countLoading, refetch } = useReadContract({
     abi: piggyBankFactoryAbi,
     address: factoryAddress || undefined,
-    functionName: "getVaults",
+    functionName: "getVaultCount",
     args: address ? [address] : undefined,
     query: { enabled: Boolean(factoryAddress && address), refetchInterval: 6000 },
   });
 
-  const vaults = useMemo(() => (data as VaultView[] | undefined) ?? [], [data]);
+  const vaultCount = Number(countData ?? 0n);
+  const vaultCalls = useMemo(
+    () =>
+      address && factoryAddress
+        ? Array.from({ length: vaultCount }, (_, index) => ({
+            abi: piggyBankFactoryAbi,
+            address: factoryAddress,
+            functionName: "getVault",
+            args: [address, BigInt(index)],
+          }))
+        : [],
+    [address, factoryAddress, vaultCount],
+  );
+
+  const { data: vaultResults, isLoading: vaultsLoading, refetch: refetchVaults } = useReadContracts({
+    contracts: vaultCalls,
+    query: { enabled: vaultCalls.length > 0, refetchInterval: 6000 },
+  });
+
+  const refreshAll = () => Promise.all([refetch(), refetchVaults()]);
+
+  const vaults = useMemo(() => {
+    if (!vaultResults) return [] as VaultRecord[];
+    return vaultResults
+      .map((result, index) => {
+        if (result.status !== "success") return null;
+        const value = result.result;
+        if (!value || typeof value !== "object" || !("label" in value)) return null;
+        const vault = value as VaultView;
+        return { ...vault, vaultId: index } satisfies VaultRecord;
+      })
+      .filter((vault): vault is VaultRecord => vault !== null && !vault.withdrawn);
+  }, [vaultResults]);
 
   useEffect(() => {
-    if (vaults.length > 0 && (selectedVaultId === null || !vaults[selectedVaultId])) {
-      setSelectedVaultId(0);
+    if (vaults.length > 0 && (selectedVaultId === null || !vaults.some((vault) => vault.vaultId === selectedVaultId))) {
+      setSelectedVaultId(vaults[0].vaultId);
     }
   }, [selectedVaultId, vaults]);
 
-  const selectedVault = selectedVaultId !== null ? vaults[selectedVaultId] ?? null : vaults[0] ?? null;
+  const selectedVault = selectedVaultId !== null ? vaults.find((vault) => vault.vaultId === selectedVaultId) ?? null : vaults[0] ?? null;
+  const isLoading = countLoading || vaultsLoading;
 
   if (!isConnected) {
     return (
@@ -334,8 +473,10 @@ export function VaultDashboard() {
 
   return (
     <section className="space-y-6">
+      <TxBanner tx={txState} />
+
       <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.03] p-4 text-sm text-amber-100/65">
-        If a vault says it was created but does not appear yet, tap <strong>Refresh</strong> and confirm the transaction on Blockscout from the toast or wallet history link above.
+        If a vault says it was created but does not appear yet, tap <strong>Refresh</strong> and confirm the transaction on Blockscout from the tx status rail or wallet history.
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -343,11 +484,11 @@ export function VaultDashboard() {
           <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/45">Portfolio</div>
           <h2 className="mt-2 text-3xl font-semibold text-amber-50">Your live vaults</h2>
           <p className="mt-2 max-w-2xl text-sm text-amber-100/55">
-            Every vault created by this wallet is listed here. Approve, deposit, and withdraw from one panel.
+            Every live vault from this wallet is listed here. Select one card and act directly below it.
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => refetch()} variant="outline" className="border-amber-500/25 text-amber-100 hover:bg-amber-500/10">
+          <Button onClick={() => refreshAll()} variant="outline" className="border-amber-500/25 text-amber-100 hover:bg-amber-500/10">
             <ArrowUpRight className="mr-2 h-4 w-4" /> Refresh
           </Button>
           <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
@@ -358,26 +499,25 @@ export function VaultDashboard() {
 
       <StatsBar vaults={vaults} />
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/80 p-6 text-sm text-amber-100/60">Loading vaults...</div>
-          ) : vaults.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-amber-500/20 bg-[#0f0c08]/80 p-8 text-center text-amber-100/60">
-              <PiggyBank className="mx-auto mb-3 h-8 w-8 text-amber-300/70" />
-              No vaults yet. Create the first vault, then come back here to manage it.
-            </div>
-          ) : (
-            vaults.map((vault, index) => {
-              const percent = progressPercent(vault);
-              const unlocked = vaultUnlocked(vault);
-              const remainingDays = daysLeft(vault.deadline);
-              const selected = (selectedVaultId ?? 0) === index;
+      <div className="space-y-4">
+        {isLoading ? (
+          <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/80 p-6 text-sm text-amber-100/60">Loading vaults...</div>
+        ) : vaults.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-amber-500/20 bg-[#0f0c08]/80 p-8 text-center text-amber-100/60">
+            <PiggyBank className="mx-auto mb-3 h-8 w-8 text-amber-300/70" />
+            No live vaults yet. Create the first vault, then come back here to manage it.
+          </div>
+        ) : (
+          vaults.map((vault) => {
+            const percent = progressPercent(vault);
+            const unlocked = vaultUnlocked(vault);
+            const remainingDays = daysLeft(vault.deadline);
+            const selected = selectedVaultId === vault.vaultId;
 
-              return (
+            return (
+              <div key={`vault-${vault.vaultId}`} className="space-y-0">
                 <button
-                  key={`${vault.label}-${index}`}
-                  onClick={() => setSelectedVaultId(index)}
+                  onClick={() => setSelectedVaultId(vault.vaultId)}
                   className={`w-full rounded-3xl border p-5 text-left transition ${
                     selected ? "border-amber-400/40 bg-amber-500/[0.06]" : "border-amber-500/10 bg-[#0f0c08]/80 hover:border-amber-500/25"
                   }`}
@@ -386,7 +526,7 @@ export function VaultDashboard() {
                     <div className="min-w-0">
                       <div className="break-words text-lg font-semibold text-amber-50">{vault.label}</div>
                       <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-amber-200/40">
-                        {PRIMARY_STABLE_TOKEN.symbol} · {remainingDays === null ? "goal unlock" : `${remainingDays}d left`}
+                        {PRIMARY_STABLE_TOKEN.symbol} · {remainingDays === null ? "goal unlock" : `${remainingDays}d left`} · vault #{vault.vaultId}
                       </div>
                     </div>
                     <div className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
@@ -406,17 +546,19 @@ export function VaultDashboard() {
                         <div className="h-full rounded-full bg-amber-400" style={{ width: `${percent}%` }} />
                       </div>
                       <div className="mt-2 text-sm text-amber-100/55">
-                        {Math.round(percent)}% complete · {vault.withdrawn ? "closed" : unlocked ? "withdraw cleanly" : `exit early costs ${DEFAULT_PENALTY_BPS / 100}%`}
+                        {Math.round(percent)}% complete · {unlocked ? "withdraw cleanly" : `exit early costs ${DEFAULT_PENALTY_BPS / 100}%`}
                       </div>
                     </div>
                   </div>
                 </button>
-              );
-            })
-          )}
-        </div>
 
-        <DepositPanel selectedVault={selectedVault} selectedVaultId={selectedVault ? (selectedVaultId ?? 0) : null} refetch={refetch} />
+                {selected ? (
+                  <VaultActionPanel selectedVault={vault} refetch={refreshAll} txState={txState} setTxState={setTxState} />
+                ) : null}
+              </div>
+            );
+          })
+        )}
       </div>
     </section>
   );
