@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ExternalLink, PiggyBank, ShieldCheck, Wallet } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
 import { PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
-import { addressUrl } from "@/lib/contracts";
+import { explorerAddressUrl, targetChain } from "@/lib/chains";
 
 function formatBalance(value?: string, decimals = 4) {
   return Number(value || "0").toLocaleString(undefined, {
@@ -18,11 +18,13 @@ export function UserBalance() {
 
   const { data: celoBalance, isLoading: celoLoading } = useBalance({
     address,
+    chainId: targetChain.id,
     query: { enabled: Boolean(address) },
   });
 
   const { data: stableBalance, isLoading: stableLoading } = useBalance({
     address,
+    chainId: targetChain.id,
     token: PRIMARY_STABLE_TOKEN.address,
     query: { enabled: Boolean(address) },
   });
@@ -46,8 +48,8 @@ export function UserBalance() {
         <div className="mt-4 rounded-2xl border border-amber-500/10 bg-black/20 p-4 text-sm text-amber-100/65">
           Your live spending + saving rail for MiniSave. Keep CELO for gas and {PRIMARY_STABLE_TOKEN.symbol} for deposits.
           <div className="mt-3 flex items-center justify-between gap-3 text-xs text-amber-100/55">
-            <span>Network: {chain?.name || "Unknown"}</span>
-            <Link href={addressUrl(address)} target="_blank" className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200">
+            <span>Connected: {chain?.name || "Unknown"} · Target: {targetChain.name}</span>
+            <Link href={explorerAddressUrl(address, targetChain.id)} target="_blank" className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200">
               Wallet history <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -59,7 +61,7 @@ export function UserBalance() {
           <ShieldCheck className="h-4 w-4 text-emerald-300" /> Gas balance
         </div>
         <div className="mt-4 text-2xl font-semibold text-amber-50">{celoLoading ? "..." : formatBalance(celoBalance?.formatted)}</div>
-        <div className="mt-1 text-sm text-amber-100/55">CELO on Celo Sepolia</div>
+        <div className="mt-1 text-sm text-amber-100/55">CELO on {targetChain.name}</div>
       </div>
 
       <div className="rounded-3xl border border-amber-500/15 bg-[#0f0c08]/85 p-5">

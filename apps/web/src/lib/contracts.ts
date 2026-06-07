@@ -1,4 +1,4 @@
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits, parseUnits, type PublicClient } from "viem";
 import { FACTORY_ADDRESS, PRIMARY_STABLE_TOKEN } from "./minisave";
 
 export const piggyBankFactoryAbi = [
@@ -143,12 +143,20 @@ export function resolveFactoryAddress() {
   return FACTORY_ADDRESS as `0x${string}` | "";
 }
 
-export function txUrl(hash: string) {
-  return `https://celo-sepolia.blockscout.com/tx/${hash}`;
-}
+export async function waitForConfirmedReceipt(
+  publicClient: PublicClient | undefined,
+  hash: `0x${string}`,
+) {
+  if (!publicClient) {
+    throw new Error("Target network client is unavailable.");
+  }
 
-export function addressUrl(address: string) {
-  return `https://celo-sepolia.blockscout.com/address/${address}`;
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") {
+    throw new Error("Transaction failed onchain.");
+  }
+
+  return receipt;
 }
 
 export function progressPercent(vault: VaultView) {

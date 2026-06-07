@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useAccount, useBalance, useWriteContract } from "wagmi";
+import { useAccount, useBalance, usePublicClient, useWriteContract } from "wagmi";
 import { ArrowRight, CalendarClock, ChevronRight, Gift, Loader2, PiggyBank, Sparkles, Target, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits, txUrl } from "@/lib/contracts";
+import { NetworkGuard } from "@/components/network-guard";
+import { explorerTxUrl } from "@/lib/chains";
+import { piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits, waitForConfirmedReceipt } from "@/lib/contracts";
 import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
+import { useChainGuard } from "@/lib/use-chain-guard";
 
 function dateToUnixTimestamp(value: string) {
   if (!value) return 0n;
@@ -33,10 +36,13 @@ function humanizeError(err: unknown) {
 export function CreateGoalForm() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { isWrongChain, promptSwitchChain, targetChain } = useChainGuard();
   const factoryAddress = resolveFactoryAddress();
   const { writeContractAsync, isPending } = useWriteContract();
+  const publicClient = usePublicClient({ chainId: targetChain.id });
   const { data: stableBalance, isLoading: balanceLoading } = useBalance({
     address,
+    chainId: targetChain.id,
     token: PRIMARY_STABLE_TOKEN.address,
     query: { enabled: Boolean(address) },
   });
@@ -65,6 +71,14 @@ export function CreateGoalForm() {
       return;
     }
 
+    if (isWrongChain) {
+      const message = `Switch to ${targetChain.name} before creating a vault.`;
+      setError(message);
+      toast.error(message);
+      await promptSwitchChain().catch(() => undefined);
+      return;
+    }
+
     if (!title.trim()) {
       const message = "Goal title is required.";
       setError(message);
@@ -89,14 +103,17 @@ export function CreateGoalForm() {
         args: [title.trim(), toTokenUnits(targetAmount), dateToUnixTimestamp(deadline)],
       });
 
+      setStatus("Wallet confirmed. Waiting for onchain confirmation...");
+      await waitForConfirmedReceipt(publicClient, hash);
+
       const success = `Vault created. Tx: ${hash.slice(0, 10)}... Opening portfolio.`;
       setStatus(success);
       toast.success("Vault created successfully.", {
         id: "create-vault",
-        description: `View on Blockscout: ${hash.slice(0, 10)}...`,
+        description: `View on explorer: ${hash.slice(0, 10)}...`,
         action: {
           label: "Open tx",
-          onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
+          onClick: () => window.open(explorerTxUrl(hash, targetChain.id), "_blank", "noopener,noreferrer"),
         },
       });
       setTimeout(() => {
@@ -132,7 +149,11 @@ export function CreateGoalForm() {
           Complete this vault to qualify for v2 penalty-share rewards.
         </div>
 
-        <div className="mt-6 grid gap-4 sm:gap-5">
+        <div className="mt-6">
+          <NetworkGuard />
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:gap-5">
           <label className="grid gap-2 rounded-[26px] border border-amber-500/12 bg-black/15 p-4 text-sm font-medium text-amber-100/75 sm:p-5">
             <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Vault title</span>
             <input
@@ -186,7 +207,7 @@ export function CreateGoalForm() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button onClick={handleCreateGoal} disabled={isPending} className="h-12 flex-1 bg-amber-500 text-base text-black hover:bg-amber-400">
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
-              Create vault on Celo
+              Create vault on {targetChain.name}
             </Button>
             <Button asChild variant="outline" className="h-12 flex-1 border-amber-500/25 text-amber-100 hover:bg-amber-500/10">
               <Link href="/portfolio">
@@ -219,9 +240,9 @@ export function CreateGoalForm() {
         <div className="rounded-[28px] border border-amber-500/15 bg-[#0f0c08]/92 p-6 text-sm text-amber-100/65">
           <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/45">What happens after create</div>
           <div className="mt-4 space-y-3">
-            <p>1. Your vault is written onchain immediately.</p>
-            <p>2. It shows up in <strong>Portfolio</strong> as your live position.</p>
-            <p>3. You approve and deposit from the dashboard panel.</p>
+            <p>1. Your vault transaction is submitted to {targetChain.name}.</p>
+            <p>2. Success UI only appears after the receipt is confirmed onchain.</p>
+            <p>3. The vault then shows up in <strong>Portfolio</strong> for approval, deposit, and withdrawal actions.</p>
           </div>
         </div>
       </div>

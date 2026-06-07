@@ -1,89 +1,78 @@
-# minisave-app - Smart Contracts
+# MiniSave Smart Contracts
 
-This directory contains the smart contracts for minisave-app, built with Hardhat and optimized for the Celo blockchain.
+This package contains the MiniSave onchain core:
 
-## 🚀 Quick Start
+- `PiggyBankFactory` stores each wallet's vault structs and custody for the vault token.
+- `PenaltyReserve` receives early-exit penalties in a standalone reserve contract for transparent accounting and future migration.
+- `MockERC20` exists only for local and Celo Sepolia testing.
+
+## Quick Start
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Compile contracts
 pnpm compile
-
-# Run tests
 pnpm test
-
-# Deploy to Celo Sepolia Testnet
 pnpm deploy:celo-sepolia
-
-# Deploy to Celo Mainnet
 pnpm deploy:celo
 ```
 
-## 📜 Available Scripts
+## Available Scripts
 
-- `pnpm compile` - Compile smart contracts
-- `pnpm test` - Run contract tests
-- `pnpm deploy` - Deploy to local network
-- `pnpm deploy:celo-sepolia` - Deploy to Celo Sepolia Testnet
-- `pnpm deploy:celo` - Deploy to Celo Mainnet
-- `pnpm verify` - Verify contracts on Etherscan
-- `pnpm clean` - Clean artifacts and cache
+- `pnpm compile` compiles contracts.
+- `pnpm test` runs the Hardhat test suite.
+- `pnpm deploy` deploys the Ignition module to the default network.
+- `pnpm deploy:mock-token` deploys `MockERC20` to Celo Sepolia.
+- `pnpm deploy:celo-sepolia` deploys `PenaltyReserve` and `PiggyBankFactory` to Celo Sepolia.
+- `pnpm deploy:celo` deploys `PenaltyReserve` and `PiggyBankFactory` to Celo mainnet.
+- `pnpm verify` runs Hardhat verification tooling.
+- `pnpm clean` clears artifacts and cache.
 
-## 🌐 Networks
+## Contracts
 
-### Celo Mainnet
-- **Chain ID**: 42220
-- **RPC URL**: https://forno.celo.org
-- **Explorer**: https://celoscan.io
+### PiggyBankFactory
 
-### Celo Sepolia Testnet
-- **Chain ID**: 11142220
-- **RPC URL**: https://forno.celo-sepolia.celo-testnet.org/
-- **Explorer**: https://sepolia.celoscan.io/
-- **Faucet**: https://faucet.celo.org/celo-sepolia
+- Immutable stable-token address.
+- Immutable penalty-reserve address.
+- Immutable penalty basis points.
+- Creates multiple vaults per owner.
+- Accepts deposits and applies an early-withdraw penalty unless the goal has been reached or the deadline has passed.
 
+### PenaltyReserve
 
-## 🔧 Environment Setup
+- Ownable reserve contract for custody of penalty funds.
+- Accepts penalty accounting calls only from the configured factory.
+- Supports one-time factory binding and owner-controlled migration to a future rewards contract.
 
-1. Copy the environment template:
-   ```bash
-   cp .env.example .env
-   ```
+### MockERC20
 
-2. Fill in your private key and API keys:
-   ```env
-   PRIVATE_KEY=your_private_key_without_0x_prefix
-   ETHERSCAN_API_KEY=your_etherscan_api_key
-   ```
+- Mintable ERC-20 used only for testing and Sepolia demos.
 
-## 📁 Project Structure
+## Environment
 
-```
-contracts/          # Smart contract source files
-├── Lock.sol        # Sample timelock contract
+Copy `.env.example` to `.env` and configure:
 
-test/              # Contract tests
-├── Lock.ts        # Tests for Lock contract
-
-ignition/          # Deployment scripts
-└── modules/
-    └── Lock.ts    # Lock contract deployment
-
-hardhat.config.ts  # Hardhat configuration
-tsconfig.json      # TypeScript configuration
+```env
+PRIVATE_KEY=your_private_key_without_0x_prefix
+ETHERSCAN_API_KEY=your_etherscan_api_key
+STABLE_TOKEN_ADDRESS=stable_token_address
+PENALTY_RESERVE_OWNER=owner_address
+DEPLOYER_ADDRESS=fallback_owner_address
+PENALTY_BPS=330
+MOCK_TOKEN_NAME=MiniSave Mock USD
+MOCK_TOKEN_SYMBOL=mUSD
+MOCK_TOKEN_DECIMALS=18
 ```
 
-## 🔐 Security Notes
+## Deployment Notes
 
-- Never commit your `.env` file with real private keys
-- Use a dedicated wallet for development/testing
-- Test thoroughly on Celo Sepolia Testnet before CeloMainnet deployment
-- Consider using a hardware wallet for mainnet deployments
+- Use Sepolia first for smoke tests.
+- Set `STABLE_TOKEN_ADDRESS` before deploying the factory module.
+- `PENALTY_RESERVE_OWNER` should be a controlled operator wallet, not an arbitrary deploy-time placeholder.
+- The Ignition module deploys `PenaltyReserve`, deploys `PiggyBankFactory`, then binds the reserve to that factory.
 
-## 📚 Learn More
+## Security Notes
 
-- [Hardhat Documentation](https://hardhat.org/docs)
-- [Celo Developer Documentation](https://docs.celo.org)
-- [Viem Documentation](https://viem.sh) (Ethereum library used by Hardhat)
+- Never commit a real `.env`.
+- Use a dedicated deployer for testnet and mainnet.
+- Verify addresses and penalty settings before deployment.
+- Re-run the test suite before every deployment.

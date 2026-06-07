@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useAccount, useReadContract, useReadContracts, useWriteContract } from "wagmi";
+import { useAccount, usePublicClient, useReadContract, useReadContracts, useWriteContract } from "wagmi";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -18,6 +18,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NetworkGuard } from "@/components/network-guard";
+import { explorerTxUrl } from "@/lib/chains";
 import {
   daysLeft,
   erc20Abi,
@@ -26,11 +28,12 @@ import {
   progressPercent,
   resolveFactoryAddress,
   toTokenUnits,
-  txUrl,
   vaultUnlocked,
+  waitForConfirmedReceipt,
   type VaultView,
 } from "@/lib/contracts";
 import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
+import { useChainGuard } from "@/lib/use-chain-guard";
 
 type VaultRecord = VaultView & { vaultId: number };
 
@@ -107,7 +110,7 @@ function StatsBar({ vaults }: { vaults: VaultRecord[] }) {
   );
 }
 
-function TxBanner({ tx }: { tx: TxBannerState }) {
+function TxBanner({ tx, chainId }: { tx: TxBannerState; chainId: number }) {
   if (tx.kind === "idle") return null;
 
   const palette = {
@@ -137,7 +140,7 @@ function TxBanner({ tx }: { tx: TxBannerState }) {
         </div>
         {tx.txHash ? (
           <a
-            href={txUrl(tx.txHash)}
+            href={explorerTxUrl(tx.txHash, chainId)}
             target="_blank"
             rel="noreferrer"
             className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white/90 transition hover:bg-white/15"
@@ -163,8 +166,10 @@ function VaultActionPanel({
   setTxState: (state: TxBannerState) => void;
 }) {
   const { address } = useAccount();
+  const { isWrongChain, promptSwitchChain, targetChain } = useChainGuard();
   const factoryAddress = resolveFactoryAddress();
   const { writeContractAsync, isPending } = useWriteContract();
+  const publicClient = usePublicClient({ chainId: targetChain.id });
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
 
@@ -175,9 +180,10 @@ function VaultActionPanel({
   } = useReadContract({
     abi: erc20Abi,
     address: PRIMARY_STABLE_TOKEN.address,
+    chainId: targetChain.id,
     functionName: "allowance",
     args: address && factoryAddress ? [address, factoryAddress] : undefined,
-    query: { enabled: Boolean(address && factoryAddress) },
+    query: { enabled: Boolean(address && factoryAddress && !isWrongChain) },
   });
 
   const parsedAmount = amount ? toTokenUnits(amount) : 0n;
@@ -191,11 +197,19 @@ function VaultActionPanel({
 
   async function handleApprove() {
     if (!factoryAddress || !parsedAmount) return;
+    if (isWrongChain) {
+      const message = `Switch to ${targetChain.name} before approving deposits.`;
+      setError(message);
+      setTxState({ kind: "error", title: "Wrong network", detail: message });
+      toast.error(message);
+      await promptSwitchChain().catch(() => undefined);
+      return;
+    }
     setError("");
     setTxState({
       kind: "pending",
       title: `Approving ${amount} ${PRIMARY_STABLE_TOKEN.symbol}`,
-      detail: "Waiting for wallet confirmation and allowance refresh.",
+      detail: "Waiting for wallet confirmation.",
     });
     toast.loading("Confirm token approval in your wallet...", { id: "vault-approve" });
     try {
@@ -206,16 +220,23 @@ function VaultActionPanel({
         args: [factoryAddress, parsedAmount],
       });
       setTxState({
+        kind: "pending",
+        title: `Approval submitted on ${targetChain.name}`,
+        detail: "Waiting for confirmed receipt before enabling deposit actions.",
+        txHash: hash,
+      });
+      await waitForConfirmedReceipt(publicClient, hash);
+      setTxState({
         kind: "success",
-        title: "Approval submitted",
+        title: "Approval confirmed",
         detail: `Allowance refreshed for ${amount} ${PRIMARY_STABLE_TOKEN.symbol}. You can deposit now.`,
         txHash: hash,
       });
-      toast.success("Approval submitted.", {
+      toast.success("Approval confirmed.", {
         id: "vault-approve",
         action: {
           label: "Open tx",
-          onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
+          onClick: () => window.open(explorerTxUrl(hash, targetChain.id), "_blank", "noopener,noreferrer"),
         },
       });
       await Promise.all([refetchAllowance(), refetch()]);
@@ -229,6 +250,14 @@ function VaultActionPanel({
 
   async function handleDeposit() {
     if (!factoryAddress || !parsedAmount) return;
+    if (isWrongChain) {
+      const message = `Switch to ${targetChain.name} before depositing.`;
+      setError(message);
+      setTxState({ kind: "error", title: "Wrong network", detail: message });
+      toast.error(message);
+      await promptSwitchChain().catch(() => undefined);
+      return;
+    }
     setError("");
     setTxState({
       kind: "pending",
@@ -243,13 +272,20 @@ function VaultActionPanel({
         functionName: "deposit",
         args: [vaultId, parsedAmount],
       });
+      setTxState({
+        kind: "pending",
+        title: `Deposit submitted to ${targetChain.name}`,
+        detail: "Waiting for confirmed receipt before refreshing the vault.",
+        txHash: hash,
+      });
+      await waitForConfirmedReceipt(publicClient, hash);
       setAmount("");
-      toast.success("Deposit submitted.", {
+      toast.success("Deposit confirmed.", {
         id: "vault-deposit",
         description: "Refreshing your vaults.",
         action: {
           label: "Open tx",
-          onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
+          onClick: () => window.open(explorerTxUrl(hash, targetChain.id), "_blank", "noopener,noreferrer"),
         },
       });
       await Promise.all([refetchAllowance(), refetch()]);
@@ -269,6 +305,14 @@ function VaultActionPanel({
 
   async function handleWithdraw() {
     if (!factoryAddress || isClosed) return;
+    if (isWrongChain) {
+      const message = `Switch to ${targetChain.name} before withdrawing.`;
+      setError(message);
+      setTxState({ kind: "error", title: "Wrong network", detail: message });
+      toast.error(message);
+      await promptSwitchChain().catch(() => undefined);
+      return;
+    }
     setError("");
     setTxState({
       kind: "pending",
@@ -285,12 +329,19 @@ function VaultActionPanel({
         functionName: "withdraw",
         args: [vaultId],
       });
-      toast.success(unlocked ? "Withdrawal submitted." : "Early withdrawal submitted.", {
+      setTxState({
+        kind: "pending",
+        title: unlocked ? "Withdrawal submitted" : "Early exit submitted",
+        detail: "Waiting for confirmed receipt before refreshing your portfolio.",
+        txHash: hash,
+      });
+      await waitForConfirmedReceipt(publicClient, hash);
+      toast.success(unlocked ? "Withdrawal confirmed." : "Early withdrawal confirmed.", {
         id: "vault-withdraw",
         description: unlocked ? "Full amount should return to your wallet." : `Penalty remains ${DEFAULT_PENALTY_BPS / 100}% while locked.`,
         action: {
           label: "Open tx",
-          onClick: () => window.open(txUrl(hash), "_blank", "noopener,noreferrer"),
+          onClick: () => window.open(explorerTxUrl(hash, targetChain.id), "_blank", "noopener,noreferrer"),
         },
       });
       await Promise.all([refetchAllowance(), refetch()]);
@@ -400,6 +451,7 @@ function VaultActionPanel({
 
 export function VaultDashboard() {
   const { address, isConnected } = useAccount();
+  const { isWrongChain, targetChain } = useChainGuard();
   const [selectedVaultId, setSelectedVaultId] = useState<number | null>(null);
   const [txState, setTxState] = useState<TxBannerState>({ kind: "idle", title: "" });
   const factoryAddress = resolveFactoryAddress();
@@ -407,9 +459,10 @@ export function VaultDashboard() {
   const { data: countData, isLoading: countLoading, refetch } = useReadContract({
     abi: piggyBankFactoryAbi,
     address: factoryAddress || undefined,
+    chainId: targetChain.id,
     functionName: "getVaultCount",
     args: address ? [address] : undefined,
-    query: { enabled: Boolean(factoryAddress && address), refetchInterval: 6000 },
+    query: { enabled: Boolean(factoryAddress && address && !isWrongChain), refetchInterval: 6000 },
   });
 
   const vaultCount = Number(countData ?? 0n);
@@ -419,16 +472,17 @@ export function VaultDashboard() {
         ? Array.from({ length: vaultCount }, (_, index) => ({
             abi: piggyBankFactoryAbi,
             address: factoryAddress,
+            chainId: targetChain.id,
             functionName: "getVault",
             args: [address, BigInt(index)],
           }))
         : [],
-    [address, factoryAddress, vaultCount],
+    [address, factoryAddress, targetChain.id, vaultCount],
   );
 
   const { data: vaultResults, isLoading: vaultsLoading, refetch: refetchVaults } = useReadContracts({
     contracts: vaultCalls,
-    query: { enabled: vaultCalls.length > 0, refetchInterval: 6000 },
+    query: { enabled: vaultCalls.length > 0 && !isWrongChain, refetchInterval: 6000 },
   });
 
   const refreshAll = () => Promise.all([refetch(), refetchVaults()]);
@@ -473,10 +527,11 @@ export function VaultDashboard() {
 
   return (
     <section className="space-y-6">
-      <TxBanner tx={txState} />
+      <TxBanner tx={txState} chainId={targetChain.id} />
+      <NetworkGuard />
 
       <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.03] p-4 text-sm text-amber-100/65">
-        If a vault says it was created but does not appear yet, tap <strong>Refresh</strong> and confirm the transaction on Blockscout from the tx status rail or wallet history.
+        If a vault says it was created but does not appear yet, tap <strong>Refresh</strong> and confirm the transaction on the configured explorer from the tx status rail or wallet history.
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
