@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { NetworkGuard } from "@/components/network-guard";
 import { explorerTxUrl } from "@/lib/chains";
 import { piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits, waitForConfirmedReceipt } from "@/lib/contracts";
-import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
+import { BASE_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 import { useChainGuard } from "@/lib/use-chain-guard";
 
 function dateToUnixTimestamp(value: string) {
@@ -195,7 +195,7 @@ export function CreateGoalForm() {
             </div>
             <ul className="space-y-2 leading-6">
               <li>• Deposits use <strong>{PRIMARY_STABLE_TOKEN.symbol}</strong> only for this release.</li>
-              <li>• Early exit applies a <strong>{DEFAULT_PENALTY_BPS / 100}% penalty to the public reserve</strong>.</li>
+              <li>• Early exit starts at <strong>{BASE_PENALTY_BPS / 100}% and decays linearly to 0%</strong> by the deadline.</li>
               <li>• Hit the goal or outlast the timer to unlock cleanly.</li>
               <li>• Finish the vault and you become eligible for future reward-pool distribution in v2.</li>
             </ul>

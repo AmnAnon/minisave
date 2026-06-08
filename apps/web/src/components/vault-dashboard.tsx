@@ -21,9 +21,13 @@ import { Button } from "@/components/ui/button";
 import { NetworkGuard } from "@/components/network-guard";
 import { explorerTxUrl } from "@/lib/chains";
 import {
+  calculatePenaltyBps,
   daysLeft,
   erc20Abi,
+  estimatePenaltyAmount,
+  formatPenaltyPercent,
   formatTokenAmount,
+  penaltyFreeInDays,
   piggyBankFactoryAbi,
   progressPercent,
   resolveFactoryAddress,
@@ -32,7 +36,7 @@ import {
   waitForConfirmedReceipt,
   type VaultView,
 } from "@/lib/contracts";
-import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
+import { BASE_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 import { useChainGuard } from "@/lib/use-chain-guard";
 
 type VaultRecord = VaultView & { vaultId: number };
@@ -192,7 +196,9 @@ function VaultActionPanel({
   const remaining = selectedVault.goalAmount > selectedVault.deposited ? selectedVault.goalAmount - selectedVault.deposited : 0n;
   const unlocked = vaultUnlocked(selectedVault);
   const vaultId = BigInt(selectedVault.vaultId);
-  const earlyPenaltyPreview = (parsedAmount * BigInt(DEFAULT_PENALTY_BPS)) / 10_000n;
+  const currentPenaltyBps = calculatePenaltyBps(selectedVault);
+  const earlyPenaltyPreview = estimatePenaltyAmount(selectedVault, parsedAmount);
+  const penaltyFreeDays = penaltyFreeInDays(selectedVault);
   const isClosed = selectedVault.withdrawn;
 
   async function handleApprove() {
@@ -319,7 +325,7 @@ function VaultActionPanel({
       title: unlocked ? "Processing clean withdrawal" : "Processing early exit",
       detail: unlocked
         ? `Submitting full withdrawal from vault #${selectedVault.vaultId}.`
-        : `Submitting early withdrawal from vault #${selectedVault.vaultId} at ${DEFAULT_PENALTY_BPS / 100}% penalty.`,
+        : `Submitting early withdrawal from vault #${selectedVault.vaultId} at ${formatPenaltyPercent(currentPenaltyBps)} penalty.`,
     });
     toast.loading(unlocked ? "Confirm withdrawal in your wallet..." : "Confirm early exit in your wallet...", { id: "vault-withdraw" });
     try {
@@ -338,7 +344,7 @@ function VaultActionPanel({
       await waitForConfirmedReceipt(publicClient, hash);
       toast.success(unlocked ? "Withdrawal confirmed." : "Early withdrawal confirmed.", {
         id: "vault-withdraw",
-        description: unlocked ? "Full amount should return to your wallet." : `Penalty remains ${DEFAULT_PENALTY_BPS / 100}% while locked.`,
+        description: unlocked ? "Full amount should return to your wallet." : `Penalty is currently ${formatPenaltyPercent(currentPenaltyBps)} while locked.`,
         action: {
           label: "Open tx",
           onClick: () => window.open(explorerTxUrl(hash, targetChain.id), "_blank", "noopener,noreferrer"),
@@ -370,13 +376,13 @@ function VaultActionPanel({
               ? "This vault is already closed. Select another live vault to continue."
               : unlocked
                 ? "Unlocked. You can withdraw the full balance cleanly."
-                : `Locked. Deposits stay live here, and early exit routes ${DEFAULT_PENALTY_BPS / 100}% to the public reserve.`}
+                : `Locked. Early exit is currently ${formatPenaltyPercent(currentPenaltyBps)} and decays to 0% by unlock.`}
           </p>
         </div>
         <ProgressRing percent={progressPercent(selectedVault)} />
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-3">
+      <div className="mt-5 grid gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Saved</div>
           <div className="mt-2 text-lg font-semibold text-amber-50">{formatTokenAmount(selectedVault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
@@ -386,14 +392,26 @@ function VaultActionPanel({
           <div className="mt-2 text-lg font-semibold text-amber-50">{formatTokenAmount(remaining)} {PRIMARY_STABLE_TOKEN.symbol}</div>
         </div>
         <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Penalty now</div>
+          <div className="mt-2 text-lg font-semibold text-amber-50">{formatPenaltyPercent(currentPenaltyBps)}</div>
+        </div>
+        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Deadline</div>
           <div className="mt-2 text-lg font-semibold text-amber-50">{shortDate(selectedVault.deadline)}</div>
         </div>
       </div>
 
+      {!unlocked ? (
+        <div className="mt-4 rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 text-sm text-amber-100/65">
+          <div>Current penalty: <strong>{formatPenaltyPercent(currentPenaltyBps)}</strong> of any early withdrawal.</div>
+          <div className="mt-1">Estimated amount right now: <strong>{formatTokenAmount(estimatePenaltyAmount(selectedVault, selectedVault.deposited))} {PRIMARY_STABLE_TOKEN.symbol}</strong>.</div>
+          <div className="mt-1">{penaltyFreeDays === null ? `No deadline set, so the ${BASE_PENALTY_BPS / 100}% base penalty stays flat.` : `Penalty-free in ${penaltyFreeDays} day${penaltyFreeDays === 1 ? "" : "s"}.`}</div>
+        </div>
+      ) : null}
+
       {!unlocked && hasAmount ? (
         <div className="mt-4 rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 text-sm text-amber-100/65">
-          Early-exit preview: depositing {amount} {PRIMARY_STABLE_TOKEN.symbol} under a locked vault means a future break would cost roughly {formatTokenAmount(earlyPenaltyPreview)} {PRIMARY_STABLE_TOKEN.symbol} in penalty at current settings.
+          Early-exit preview: depositing {amount} {PRIMARY_STABLE_TOKEN.symbol} under a locked vault means a future break would cost roughly {formatTokenAmount(earlyPenaltyPreview)} {PRIMARY_STABLE_TOKEN.symbol} at the current {formatPenaltyPercent(currentPenaltyBps)} penalty.
         </div>
       ) : null}
 
@@ -433,7 +451,7 @@ function VaultActionPanel({
             className="h-12 w-full border-amber-500/30 text-amber-100 hover:bg-amber-500/10"
           >
             {unlocked ? <CheckCircle2 className="mr-2 h-4 w-4" /> : <AlertTriangle className="mr-2 h-4 w-4" />}
-            {unlocked ? "Withdraw cleanly" : `Break early (-${DEFAULT_PENALTY_BPS / 100}%)`}
+            {unlocked ? "Withdraw cleanly" : `Break early (-${formatPenaltyPercent(currentPenaltyBps)})`}
           </Button>
         </div>
       </div>
@@ -601,7 +619,7 @@ export function VaultDashboard() {
                         <div className="h-full rounded-full bg-amber-400" style={{ width: `${percent}%` }} />
                       </div>
                       <div className="mt-2 text-sm text-amber-100/55">
-                        {Math.round(percent)}% complete · {unlocked ? "withdraw cleanly" : `exit early costs ${DEFAULT_PENALTY_BPS / 100}%`}
+                        {Math.round(percent)}% complete · {unlocked ? "withdraw cleanly" : `exit early costs ${formatPenaltyPercent(calculatePenaltyBps(vault))} right now`}
                       </div>
                     </div>
                   </div>

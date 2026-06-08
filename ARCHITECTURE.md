@@ -23,7 +23,7 @@ Responsibilities:
 1. `PiggyBankFactory`
    - immutable token address
    - immutable penalty reserve address
-   - immutable penalty basis points
+   - immutable 8% base penalty with time decay to zero by deadline
    - stores `Vault[]` by owner address
    - supports `createVault`, `deposit`, `withdraw`, `getVault`, `getVaultCount`, `getVaults`
 2. `PenaltyReserve`
@@ -38,6 +38,7 @@ Vault fields:
 - `label`
 - `goalAmount`
 - `deadline`
+- `createdAt`
 - `deposited`
 - `withdrawn`
 
@@ -46,6 +47,7 @@ Frontend record shape:
 - `label`
 - `goalAmount`
 - `deadline`
+- `createdAt`
 - `deposited`
 - `withdrawn`
 
@@ -55,7 +57,7 @@ Frontend record shape:
 - withdraw is full-balance only
 - withdrawal is penalty-free if the vault is unlocked
 - a vault unlocks when `deposited >= goalAmount` or `deadline <= block.timestamp`
-- early withdrawal sends `penaltyBps` to `PenaltyReserve` and the remainder back to the owner
+- early withdrawal penalty starts at 8%, decays linearly with time remaining, and routes the charged amount to `PenaltyReserve`
 
 ## Frontend routes
 - `/` home and product narrative

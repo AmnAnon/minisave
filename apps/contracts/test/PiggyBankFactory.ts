@@ -3,6 +3,10 @@ import { expect } from "chai";
 import hre from "hardhat";
 import { keccak256, stringToHex } from "viem";
 
+const BASE_PENALTY_BPS = 800n;
+const DEPOSIT_AMOUNT = 500_000n;
+const ONE_HUNDRED_DAYS = 100n * 24n * 60n * 60n;
+
 describe("PiggyBankFactory", function () {
   async function deployFixture() {
     const [owner, reserveOwner, stranger] = await hre.viem.getWalletClients();
@@ -14,7 +18,6 @@ describe("PiggyBankFactory", function () {
     const factory = await hre.viem.deployContract("PiggyBankFactory", [
       token.address,
       reserve.address,
-      330n,
     ]);
     const publicClient = await hre.viem.getPublicClient();
 
@@ -25,9 +28,17 @@ describe("PiggyBankFactory", function () {
     return { factory, reserve, token, publicClient, owner, reserveOwner, stranger };
   }
 
-  it("creates a vault and stores it for the owner", async function () {
+  async function createTimedVault(factory: Awaited<ReturnType<typeof deployFixture>>["factory"], label = "Emergency Fund") {
+    const deadline = BigInt((await time.latest()) + Number(ONE_HUNDRED_DAYS));
+    await factory.write.createVault([label, 1_000_000n, deadline]);
+    await factory.write.deposit([0n, DEPOSIT_AMOUNT]);
+    return { deadline };
+  }
+
+  it("creates a vault and stores createdAt for the owner", async function () {
     const { factory, publicClient, owner } = await loadFixture(deployFixture);
 
+    const beforeCreate = BigInt(await time.latest());
     const hash = await factory.write.createVault(["Emergency Fund", 1_000_000n, 0n]);
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
@@ -37,6 +48,7 @@ describe("PiggyBankFactory", function () {
     const vault = await factory.read.getVault([owner.account.address, 0n]);
     expect(vault.label).to.equal("Emergency Fund");
     expect(vault.goalAmount).to.equal(1_000_000n);
+    expect(vault.createdAt >= beforeCreate).to.equal(true);
 
     const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("VaultCreated(address,uint256,string,uint256,uint256)")));
     expect(event).to.not.equal(undefined);
@@ -60,44 +72,114 @@ describe("PiggyBankFactory", function () {
     const { factory, publicClient, owner } = await loadFixture(deployFixture);
 
     await factory.write.createVault(["Phone Upgrade", 1_000_000n, 0n]);
-    const hash = await factory.write.deposit([0n, 500_000n]);
+    const hash = await factory.write.deposit([0n, DEPOSIT_AMOUNT]);
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
     const vault = await factory.read.getVault([owner.account.address, 0n]);
-    expect(vault.deposited).to.equal(500_000n);
+    expect(vault.deposited).to.equal(DEPOSIT_AMOUNT);
 
     const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("Deposited(address,uint256,uint256,uint256)")));
     expect(event).to.not.equal(undefined);
   });
 
-  it("applies a 3.3 percent penalty on early withdrawal and sends it to the public reserve", async function () {
-    const { factory, reserve, token, publicClient, owner } = await loadFixture(deployFixture);
-
-    await factory.write.createVault(["Phone Upgrade", 1_000_000n, 0n]);
-    await factory.write.deposit([0n, 500_000n]);
+  it("applies the full 8 percent base penalty for a day-0 exit", async function () {
+    const { factory, reserve, token, owner } = await loadFixture(deployFixture);
+    await createTimedVault(factory, "Day 0 Exit");
 
     const ownerBefore = await token.read.balanceOf([owner.account.address]);
     const reserveBefore = await token.read.balanceOf([reserve.address]);
 
-    const hash = await factory.write.withdraw([0n]);
-    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    await factory.write.withdraw([0n]);
 
     const ownerAfter = await token.read.balanceOf([owner.account.address]);
     const reserveAfter = await token.read.balanceOf([reserve.address]);
-    const totalPenalties = await reserve.read.totalPenalties();
+    const penaltyAmount = (DEPOSIT_AMOUNT * BASE_PENALTY_BPS) / 10_000n;
 
-    expect(ownerAfter - ownerBefore).to.equal(483_500n);
-    expect(reserveAfter - reserveBefore).to.equal(16_500n);
-    expect(totalPenalties).to.equal(16_500n);
+    const ownerDelta = ownerAfter - ownerBefore;
+    const reserveDelta = reserveAfter - reserveBefore;
 
-    const penaltyEvent = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("PenaltyApplied(address,uint256,uint256,address)")));
-    const withdrawEvent = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("Withdrawn(address,uint256,uint256,uint256,bool)")));
-    expect(penaltyEvent).to.not.equal(undefined);
-    expect(withdrawEvent).to.not.equal(undefined);
+    expect(ownerDelta >= DEPOSIT_AMOUNT - penaltyAmount - 100n && ownerDelta <= DEPOSIT_AMOUNT - penaltyAmount + 100n).to.equal(true);
+    expect(reserveDelta >= penaltyAmount - 100n && reserveDelta <= penaltyAmount + 100n).to.equal(true);
+  });
+
+  it("decays the penalty to roughly 4 percent at mid-period", async function () {
+    const { factory, reserve, token, owner } = await loadFixture(deployFixture);
+    await createTimedVault(factory, "Mid Exit");
+    await time.increase(Number(ONE_HUNDRED_DAYS / 2n));
+
+    const ownerBefore = await token.read.balanceOf([owner.account.address]);
+    const reserveBefore = await token.read.balanceOf([reserve.address]);
+
+    await factory.write.withdraw([0n]);
+
+    const ownerAfter = await token.read.balanceOf([owner.account.address]);
+    const reserveAfter = await token.read.balanceOf([reserve.address]);
+    const penaltyAmount = (DEPOSIT_AMOUNT * 400n) / 10_000n;
+
+    const ownerDelta = ownerAfter - ownerBefore;
+    const reserveDelta = reserveAfter - reserveBefore;
+
+    expect(ownerDelta >= DEPOSIT_AMOUNT - penaltyAmount - 100n && ownerDelta <= DEPOSIT_AMOUNT - penaltyAmount + 100n).to.equal(true);
+    expect(reserveDelta >= penaltyAmount - 100n && reserveDelta <= penaltyAmount + 100n).to.equal(true);
+  });
+
+  it("decays the penalty below 1 percent near the deadline", async function () {
+    const { factory, reserve, token, owner } = await loadFixture(deployFixture);
+    await createTimedVault(factory, "Near Exit");
+    await time.increase(Number((ONE_HUNDRED_DAYS * 9n) / 10n));
+
+    const ownerBefore = await token.read.balanceOf([owner.account.address]);
+    const reserveBefore = await token.read.balanceOf([reserve.address]);
+
+    await factory.write.withdraw([0n]);
+
+    const ownerAfter = await token.read.balanceOf([owner.account.address]);
+    const reserveAfter = await token.read.balanceOf([reserve.address]);
+    const penaltyAmount = reserveAfter - reserveBefore;
+
+    expect(penaltyAmount < (DEPOSIT_AMOUNT * 100n) / 10_000n).to.equal(true);
+    expect(penaltyAmount > (DEPOSIT_AMOUNT * 70n) / 10_000n).to.equal(true);
+    expect(ownerAfter - ownerBefore).to.equal(DEPOSIT_AMOUNT - penaltyAmount);
+  });
+
+  it("charges zero penalty after the deadline passes", async function () {
+    const { factory, reserve, token, owner } = await loadFixture(deployFixture);
+    await createTimedVault(factory, "Deadline Exit");
+    await time.increase(Number(ONE_HUNDRED_DAYS + 1n));
+
+    const ownerBefore = await token.read.balanceOf([owner.account.address]);
+    const reserveBefore = await token.read.balanceOf([reserve.address]);
+
+    await factory.write.withdraw([0n]);
+
+    const ownerAfter = await token.read.balanceOf([owner.account.address]);
+    const reserveAfter = await token.read.balanceOf([reserve.address]);
+
+    expect(ownerAfter - ownerBefore).to.equal(DEPOSIT_AMOUNT);
+    expect(reserveAfter - reserveBefore).to.equal(0n);
+  });
+
+  it("keeps the full 8 percent penalty flat when no deadline is set", async function () {
+    const { factory, reserve, token, owner } = await loadFixture(deployFixture);
+    await factory.write.createVault(["No Deadline", 1_000_000n, 0n]);
+    await factory.write.deposit([0n, DEPOSIT_AMOUNT]);
+    await time.increase(Number(ONE_HUNDRED_DAYS / 2n));
+
+    const ownerBefore = await token.read.balanceOf([owner.account.address]);
+    const reserveBefore = await token.read.balanceOf([reserve.address]);
+
+    await factory.write.withdraw([0n]);
+
+    const ownerAfter = await token.read.balanceOf([owner.account.address]);
+    const reserveAfter = await token.read.balanceOf([reserve.address]);
+    const penaltyAmount = (DEPOSIT_AMOUNT * BASE_PENALTY_BPS) / 10_000n;
+
+    expect(ownerAfter - ownerBefore).to.equal(DEPOSIT_AMOUNT - penaltyAmount);
+    expect(reserveAfter - reserveBefore).to.equal(penaltyAmount);
   });
 
   it("allows full withdrawal when the goal is met", async function () {
-    const { factory, reserve, token, publicClient, owner } = await loadFixture(deployFixture);
+    const { factory, reserve, token, owner } = await loadFixture(deployFixture);
 
     await factory.write.createVault(["Laptop", 1_000_000n, 0n]);
     await factory.write.deposit([0n, 1_000_000n]);
@@ -105,34 +187,12 @@ describe("PiggyBankFactory", function () {
     const ownerBefore = await token.read.balanceOf([owner.account.address]);
     const reserveBefore = await token.read.balanceOf([reserve.address]);
 
-    const hash = await factory.write.withdraw([0n]);
-    await publicClient.waitForTransactionReceipt({ hash });
+    await factory.write.withdraw([0n]);
 
     const ownerAfter = await token.read.balanceOf([owner.account.address]);
     const reserveAfter = await token.read.balanceOf([reserve.address]);
 
     expect(ownerAfter - ownerBefore).to.equal(1_000_000n);
-    expect(reserveAfter - reserveBefore).to.equal(0n);
-  });
-
-  it("allows full withdrawal after the deadline passes", async function () {
-    const { factory, reserve, token, publicClient, owner } = await loadFixture(deployFixture);
-    const deadline = BigInt((await time.latest()) + 3600);
-
-    await factory.write.createVault(["Rent Buffer", 1_000_000n, deadline]);
-    await factory.write.deposit([0n, 500_000n]);
-    await time.increase(3601);
-
-    const ownerBefore = await token.read.balanceOf([owner.account.address]);
-    const reserveBefore = await token.read.balanceOf([reserve.address]);
-
-    const hash = await factory.write.withdraw([0n]);
-    await publicClient.waitForTransactionReceipt({ hash });
-
-    const ownerAfter = await token.read.balanceOf([owner.account.address]);
-    const reserveAfter = await token.read.balanceOf([reserve.address]);
-
-    expect(ownerAfter - ownerBefore).to.equal(500_000n);
     expect(reserveAfter - reserveBefore).to.equal(0n);
   });
 
@@ -147,7 +207,7 @@ describe("PiggyBankFactory", function () {
     const { factory } = await loadFixture(deployFixture);
 
     await factory.write.createVault(["Travel", 1_000_000n, 0n]);
-    await factory.write.deposit([0n, 500_000n]);
+    await factory.write.deposit([0n, DEPOSIT_AMOUNT]);
     await factory.write.withdraw([0n]);
 
     await expect(factory.write.withdraw([0n])).to.be.rejected;
@@ -164,28 +224,37 @@ describe("PenaltyReserve", function () {
     ]);
     const publicClient = await hre.viem.getPublicClient();
 
-    return { reserve, token, publicClient, owner, reserveOwner, other };
+    return { reserve, token, publicClient, reserveOwner, other, owner };
   }
 
   it("sets the factory once and emits the event", async function () {
-    const { reserve, publicClient, reserveOwner, owner } = await loadFixture(deployFixture);
+    const { reserve, publicClient, reserveOwner, other } = await loadFixture(deployFixture);
 
-    const hash = await reserve.write.setFactory([owner.account.address], { account: reserveOwner.account });
+    const hash = await reserve.write.setFactory([other.account.address], {
+      account: reserveOwner.account,
+    });
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
-    expect((await reserve.read.factory()).toLowerCase()).to.equal(owner.account.address.toLowerCase());
+    expect((await reserve.read.factory()).toLowerCase()).to.equal(other.account.address.toLowerCase());
+    await expect(
+      reserve.write.setFactory([reserveOwner.account.address], { account: reserveOwner.account }),
+    ).to.be.rejected;
+
     const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("FactorySet(address)")));
     expect(event).to.not.equal(undefined);
   });
 
   it("tracks penalties only when called by the configured factory", async function () {
-    const { reserve, publicClient, reserveOwner, owner } = await loadFixture(deployFixture);
+    const { reserve, publicClient, reserveOwner, other } = await loadFixture(deployFixture);
 
-    await reserve.write.setFactory([owner.account.address], { account: reserveOwner.account });
-    const hash = await reserve.write.receivePenalty([123n], { account: owner.account });
+    await reserve.write.setFactory([other.account.address], { account: reserveOwner.account });
+
+    await expect(reserve.write.receivePenalty([100n])).to.be.rejected;
+
+    const hash = await reserve.write.receivePenalty([250n], { account: other.account });
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
-    expect(await reserve.read.totalPenalties()).to.equal(123n);
+    expect(await reserve.read.totalPenalties()).to.equal(250n);
     const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("PenaltyReceived(uint256)")));
     expect(event).to.not.equal(undefined);
   });
@@ -193,15 +262,16 @@ describe("PenaltyReserve", function () {
   it("migrates the full token balance to a new contract", async function () {
     const { reserve, token, publicClient, reserveOwner, other } = await loadFixture(deployFixture);
 
-    await token.write.mint([reserve.address, 777n]);
-    const hash = await reserve.write.migrate([other.account.address], { account: reserveOwner.account });
+    await token.write.mint([reserve.address, 5_000n]);
+
+    const hash = await reserve.write.migrate([other.account.address], {
+      account: reserveOwner.account,
+    });
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
     expect(await token.read.balanceOf([reserve.address])).to.equal(0n);
-    expect(await token.read.balanceOf([other.account.address])).to.equal(777n);
-
+    expect(await token.read.balanceOf([other.account.address])).to.equal(5_000n);
     const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("PoolMigrated(address,uint256)")));
     expect(event).to.not.equal(undefined);
   });
-}
-);
+});

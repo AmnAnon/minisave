@@ -1,7 +1,14 @@
 import { formatUnits, parseUnits, type PublicClient } from "viem";
-import { FACTORY_ADDRESS, PRIMARY_STABLE_TOKEN } from "./minisave";
+import { BASE_PENALTY_BPS, FACTORY_ADDRESS, PRIMARY_STABLE_TOKEN } from "./minisave";
 
 export const piggyBankFactoryAbi = [
+  {
+    type: "function",
+    name: "BASE_PENALTY_BPS",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
   {
     type: "function",
     name: "createVault",
@@ -46,6 +53,7 @@ export const piggyBankFactoryAbi = [
           { name: "label", type: "string" },
           { name: "goalAmount", type: "uint256" },
           { name: "deadline", type: "uint256" },
+          { name: "createdAt", type: "uint256" },
           { name: "deposited", type: "uint256" },
           { name: "withdrawn", type: "bool" },
         ],
@@ -65,6 +73,7 @@ export const piggyBankFactoryAbi = [
           { name: "label", type: "string" },
           { name: "goalAmount", type: "uint256" },
           { name: "deadline", type: "uint256" },
+          { name: "createdAt", type: "uint256" },
           { name: "deposited", type: "uint256" },
           { name: "withdrawn", type: "bool" },
         ],
@@ -76,13 +85,6 @@ export const piggyBankFactoryAbi = [
     name: "getVaultCount",
     stateMutability: "view",
     inputs: [{ name: "owner", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "penaltyBps",
-    stateMutability: "view",
-    inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
 ] as const;
@@ -121,6 +123,7 @@ export type VaultView = {
   label: string;
   goalAmount: bigint;
   deadline: bigint;
+  createdAt: bigint;
   deposited: bigint;
   withdrawn: boolean;
 };
@@ -170,8 +173,30 @@ export function vaultUnlocked(vault: VaultView) {
   return vault.deposited >= vault.goalAmount || (vault.deadline !== 0n && BigInt(Math.floor(Date.now() / 1000)) >= vault.deadline);
 }
 
+export function calculatePenaltyBps(vault: VaultView, nowSeconds = BigInt(Math.floor(Date.now() / 1000))) {
+  if (vault.deadline === 0n) return BASE_PENALTY_BPS;
+  if (nowSeconds >= vault.deadline) return 0;
+  const totalLockPeriod = vault.deadline - vault.createdAt;
+  if (totalLockPeriod <= 0n) return 0;
+  const timeRemaining = vault.deadline - nowSeconds;
+  return Number((BigInt(BASE_PENALTY_BPS) * timeRemaining) / totalLockPeriod);
+}
+
+export function estimatePenaltyAmount(vault: VaultView, principal: bigint, nowSeconds = BigInt(Math.floor(Date.now() / 1000))) {
+  const effectiveBps = BigInt(calculatePenaltyBps(vault, nowSeconds));
+  return (principal * effectiveBps) / 10_000n;
+}
+
 export function daysLeft(deadline: bigint) {
   if (deadline === 0n) return null;
   const diffMs = Number(deadline) * 1000 - Date.now();
   return Math.max(0, Math.ceil(diffMs / 86_400_000));
+}
+
+export function penaltyFreeInDays(vault: VaultView) {
+  return daysLeft(vault.deadline);
+}
+
+export function formatPenaltyPercent(bps: number) {
+  return `${(bps / 100).toFixed(bps % 100 === 0 ? 0 : 1)}%`;
 }

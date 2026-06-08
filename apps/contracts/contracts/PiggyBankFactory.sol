@@ -10,18 +10,19 @@ contract PiggyBankFactory is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 public constant BPS_DENOMINATOR = 10_000;
+    uint256 public constant BASE_PENALTY_BPS = 800;
 
     struct Vault {
         string label;
         uint256 goalAmount;
         uint256 deadline;
+        uint256 createdAt;
         uint256 deposited;
         bool withdrawn;
     }
 
     address public immutable token;
     address public immutable penaltyReserve;
-    uint256 public immutable penaltyBps;
 
     mapping(address => Vault[]) private vaultsByOwner;
 
@@ -46,17 +47,14 @@ contract PiggyBankFactory is ReentrancyGuard {
     error InvalidAmount();
     error InvalidDeadline();
     error InvalidLabel();
-    error InvalidPenaltyBps();
     error VaultNotFound();
     error VaultClosed();
 
-    constructor(address _token, address _penaltyReserve, uint256 _penaltyBps) {
+    constructor(address _token, address _penaltyReserve) {
         if (_token == address(0) || _penaltyReserve == address(0)) revert InvalidAddress();
-        if (_penaltyBps > BPS_DENOMINATOR) revert InvalidPenaltyBps();
 
         token = _token;
         penaltyReserve = _penaltyReserve;
-        penaltyBps = _penaltyBps;
     }
 
     function createVault(
@@ -74,6 +72,7 @@ contract PiggyBankFactory is ReentrancyGuard {
                 label: label,
                 goalAmount: goalAmount,
                 deadline: deadline,
+                createdAt: block.timestamp,
                 deposited: 0,
                 withdrawn: false
             })
@@ -106,7 +105,7 @@ contract PiggyBankFactory is ReentrancyGuard {
         uint256 userAmount = vault.deposited;
 
         if (!unlocked) {
-            penaltyAmount = (vault.deposited * penaltyBps) / BPS_DENOMINATOR;
+            penaltyAmount = calculatePenalty(vault.deposited, vault.deadline, vault.createdAt);
             userAmount = vault.deposited - penaltyAmount;
             if (penaltyAmount > 0) {
                 IERC20(token).safeTransfer(penaltyReserve, penaltyAmount);
@@ -140,6 +139,25 @@ contract PiggyBankFactory is ReentrancyGuard {
         if (vault.goalAmount == 0) return 0;
         uint256 bps = (vault.deposited * BPS_DENOMINATOR) / vault.goalAmount;
         return bps > BPS_DENOMINATOR ? BPS_DENOMINATOR : bps;
+    }
+
+    function calculatePenalty(
+        uint256 principal,
+        uint256 deadline,
+        uint256 createdAt
+    ) internal view returns (uint256) {
+        if (deadline == 0) {
+            return (principal * BASE_PENALTY_BPS) / BPS_DENOMINATOR;
+        }
+        if (block.timestamp >= deadline) {
+            return 0;
+        }
+        uint256 timeRemaining = deadline - block.timestamp;
+        uint256 totalLockPeriod = deadline - createdAt;
+        if (totalLockPeriod == 0) return 0;
+        uint256 decayFactor = (timeRemaining * 1e18) / totalLockPeriod;
+        uint256 effectiveBPS = (BASE_PENALTY_BPS * decayFactor) / 1e18;
+        return (principal * effectiveBPS) / BPS_DENOMINATOR;
     }
 
     function _vault(address owner, uint256 vaultId) internal view returns (Vault storage vault) {

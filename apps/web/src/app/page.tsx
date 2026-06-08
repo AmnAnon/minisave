@@ -2,12 +2,12 @@ import Link from "next/link";
 import { PiggyBank, ShieldCheck, Smartphone, AlertTriangle, ArrowRight, Sparkles, WalletCards, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserBalance } from "@/components/user-balance";
-import { DEFAULT_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
+import { BASE_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 
 const features = [
   {
     title: "Penalty-backed discipline",
-    description: `Withdraw early and you pay a ${DEFAULT_PENALTY_BPS / 100}% penalty. Hit the goal or wait out the deadline and you withdraw normally.`,
+    description: `Withdraw early and the penalty starts at ${BASE_PENALTY_BPS / 100}% then decays toward 0% by the deadline. Hit the goal or wait out the deadline and you withdraw normally.`,
     icon: AlertTriangle,
   },
   {
@@ -25,7 +25,7 @@ const features = [
 const steps = [
   "Create a savings vault with a goal and optional deadline",
   `Fund it using ${PRIMARY_STABLE_TOKEN.symbol} from your MiniPay wallet`,
-  `Withdraw cleanly when unlocked, or exit early with a ${DEFAULT_PENALTY_BPS / 100}% penalty`,
+  `Withdraw cleanly when unlocked, or exit early with a time-decayed penalty that starts at ${BASE_PENALTY_BPS / 100}%`,
 ];
 
 export default function Home() {

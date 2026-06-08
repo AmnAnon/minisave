@@ -9,7 +9,7 @@ The shipped product is a simple commitment-savings app:
 - one wallet can create multiple vaults
 - each vault has a label, target amount, optional deadline, deposited balance, and withdrawn state
 - deposits and withdrawals are executed through one factory contract
-- early exits route a 3.3% penalty to a public penalty reserve
+- early exits route a time-decayed penalty with an 8% day-0 base to a public penalty reserve
 - the frontend is mobile-first and optimized for MiniPay/Celo wallet flows
 
 ## Core value proposition

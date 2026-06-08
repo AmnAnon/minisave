@@ -16,7 +16,7 @@ MiniPay is built for practical everyday finance, not just speculation. MiniSave 
 - transparent onchain proof
 
 ## Current status
-In progress for Celo Proof of Ship.
+In progress for Celo Proof of Ship and hardening for a mainnet-ready v1 before 20 June.
 
 Implemented foundation:
 - product spec
@@ -28,6 +28,15 @@ Implemented foundation:
 - MiniSave landing page and create-vault flow
 - reserve-based penalty architecture
 - verified mock token for Sepolia testing
+- wallet/network guard for Celo + Celo Sepolia
+- frontend helpers for vault progress, unlock state, and penalty estimation
+- deploy/test scripts for Sepolia and Celo mainnet
+
+Verified locally on this machine:
+- `npx hardhat test` → 15/15 passing
+- `npx hardhat compile` → clean
+- `npx tsc --noEmit` in `apps/web` → clean
+- `npx next build` in `apps/web` → production build passes
 
 ## Monorepo structure
 - `apps/web` — Next.js MiniPay frontend
@@ -61,7 +70,7 @@ Supports:
 - deposit
 - withdraw
 - full withdrawal when goal met or deadline passed
-- 3.3% penalty on early withdrawal
+- early withdrawal penalty starts at 8% and decays linearly to 0% by the deadline
 
 ## Locked v1 decisions
 - no reward distribution logic yet
@@ -73,17 +82,25 @@ Supports:
 ## Current Sepolia testing stack
 Current test build now targets a dedicated **mock USD first** flow on Celo Sepolia so MiniPay testing is not blocked by incomplete faucet infrastructure.
 
+Latest active Sepolia deployment:
 - **Celo Sepolia Mock USD (testing token)**: `0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003`
-- **Celo Sepolia PenaltyReserve**: `0x739dDEb82e29a047D5c47FBf0A1871b7853a2da4`
-- **Celo Sepolia PiggyBankFactory**: `0xE919E45b4DcE6D478c1AE81a2354f86008bCdbA3`
+- **Celo Sepolia PenaltyReserve**: `0x7eC901e27655ADf1Ce7032648b6A753e2F2651C8`
+- **Celo Sepolia PiggyBankFactory**: `0x8379B08dc238010D0adE1E7E2B14e51be4DE85df`
+
+What this build is proving now:
+- MiniPay-native savings vault UX on Celo
+- multiple user-created savings vaults
+- stablecoin deposits into an onchain commitment vault
+- early-exit penalty that decays linearly to zero by deadline
+- transparent reserve architecture for future saver rewards
 
 ## Explorer and verification links
 - Mock USD verified contract:
   <https://celo-sepolia.blockscout.com/address/0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003#code>
 - PenaltyReserve explorer:
-  <https://celo-sepolia.blockscout.com/address/0x739dDEb82e29a047D5c47FBf0A1871b7853a2da4>
+  <https://celo-sepolia.blockscout.com/address/0x7eC901e27655ADf1Ce7032648b6A753e2F2651C8>
 - PiggyBankFactory explorer:
-  <https://celo-sepolia.blockscout.com/address/0xE919E45b4DcE6D478c1AE81a2354f86008bCdbA3>
+  <https://celo-sepolia.blockscout.com/address/0x8379B08dc238010D0adE1E7E2B14e51be4DE85df>
 
 ## Verification notes
 - `MockERC20` is verified on Celo Sepolia.
@@ -92,15 +109,54 @@ Current test build now targets a dedicated **mock USD first** flow on Celo Sepol
 - Current testing token is a mock asset for shipping velocity, not the final mainnet token choice.
 
 ## Immediate next steps
-1. complete clean MiniPay smoke test on the latest Celo Sepolia deployment
+1. complete one more clean MiniPay smoke test on the latest Celo Sepolia deployment
 2. verify visible portfolio positions, token balances, and transaction history links inside MiniPay
 3. capture clean submission screenshots with the latest bottom-tab UX
-4. deploy the hardened contract to Celo mainnet with final token config
-5. update Vercel env with the final mainnet factory/token config
-6. run one tiny mainnet smoke test
-7. onboard 3-5 real testers for onchain traction
+4. choose the final mainnet stable token (`USDm` recommended for v1 unless product constraints change)
+5. redeploy `PenaltyReserve` + `PiggyBankFactory` on Celo mainnet with final token config
+6. verify both contracts on the mainnet explorer
+7. update Vercel env with final mainnet chain/factory/token config
+8. run one tiny mainnet smoke test with real funds
+9. onboard 3-5 real testers for onchain traction
+
+## Do we need to redeploy?
+Yes — for **mainnet**, definitely.
+
+Reason:
+- current public addresses in the frontend/docs are **Celo Sepolia** addresses wired to a **mock test token**
+- `PiggyBankFactory` stores the token and penalty reserve as **immutable constructor values**
+- that means moving from Sepolia/mock USD to mainnet/final stable token requires a fresh deployment, not an in-place update
+
+For Sepolia, a redeploy is only needed if you want a fresh clean test deployment or have changed the contract bytecode since the currently referenced addresses.
+
+## Mainnet readiness checklist for v1
+### Contracts
+- [x] Factory + reserve architecture implemented
+- [x] Penalty math tested locally
+- [x] Goal/deadline/closed-vault guards tested locally
+- [ ] Run Sepolia smoke test against current deployed addresses
+- [ ] Verify deployer / reserve-owner operational setup
+- [ ] Decide final mainnet stable token and decimals
+- [ ] Mainnet deploy
+- [ ] Mainnet explorer verification
+
+### Frontend
+- [x] Production Next build passes
+- [x] Contract helpers aligned with current factory ABI
+- [x] Network guard exists
+- [ ] Confirm mobile MiniPay create form polish
+- [ ] Confirm success/error states for approve, deposit, withdraw on device
+- [ ] Replace testnet env defaults with mainnet values at deploy time
+
+### Product / ops
+- [ ] Freeze README + docs to final v1 scope
+- [ ] Prepare launch checklist and rollback plan
+- [ ] Run one live tiny-value test after mainnet deploy
+- [ ] Capture screenshots/demo flow before 20 June
 
 ## Roadmap
+- v1.1: cleaner MiniPay portfolio and vault history UX, including better mobile form layout and confirmation states.
+- v1.2: explorer deep links, richer reserve analytics, and clearer penalty transparency on withdraw.
 - v2: RewardDistributor contract — users who reach their savings goal or survive their deadline become eligible for a proportional share of the penalty pool, weighted by deposited amount.
 - future yield mode: route locked stablecoin deposits into conservative Celo-native yield strategies while preserving simple penalty mechanics.
 
@@ -121,4 +177,5 @@ MiniPay users are utility-first, mobile-first, and stablecoin-native. MiniSave g
 - Celo contract foundation with early exit penalty mechanic
 - reserve-based penalty architecture for clean future reward migration
 - bottom-tab mobile navigation for MiniPay-native UX
+- fresh Celo Sepolia deployment live and wired into the app
 - live MiniPay testing in progress

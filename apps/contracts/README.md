@@ -33,7 +33,7 @@ pnpm deploy:celo
 
 - Immutable stable-token address.
 - Immutable penalty-reserve address.
-- Immutable penalty basis points.
+- Immutable 8% base penalty with linear time decay to zero at deadline.
 - Creates multiple vaults per owner.
 - Accepts deposits and applies an early-withdraw penalty unless the goal has been reached or the deadline has passed.
 
@@ -57,7 +57,7 @@ ETHERSCAN_API_KEY=your_etherscan_api_key
 STABLE_TOKEN_ADDRESS=stable_token_address
 PENALTY_RESERVE_OWNER=owner_address
 DEPLOYER_ADDRESS=fallback_owner_address
-PENALTY_BPS=330
+# Early exit penalty decays linearly from the 8% base baked into PiggyBankFactory.
 MOCK_TOKEN_NAME=MiniSave Mock USD
 MOCK_TOKEN_SYMBOL=mUSD
 MOCK_TOKEN_DECIMALS=18
@@ -74,5 +74,5 @@ MOCK_TOKEN_DECIMALS=18
 
 - Never commit a real `.env`.
 - Use a dedicated deployer for testnet and mainnet.
-- Verify addresses and penalty settings before deployment.
+- Verify addresses and confirm the time-decay penalty model before deployment.
 - Re-run the test suite before every deployment.
