@@ -98,3 +98,6 @@ Thumbs.db
 
 # Turbo
 .turbo
+
+# Local git worktrees
+.worktrees/
