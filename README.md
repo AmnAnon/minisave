@@ -83,23 +83,13 @@ Why this architecture matters:
 This reserve-first design is one of the strongest parts of the project because it turns penalties into a visible communal onchain pool rather than hidden protocol fees.
 
 ## Current status
-MiniSave is beyond scaffold stage. The core v1 contract and app path are already implemented and deployed on Celo Sepolia.
+MiniSave already has its core product loop in place on Celo Sepolia:
+- users can create savings vaults
+- deposit a stablecoin into those vaults
+- exit early with a time-decaying penalty
+- route penalties into a separate public reserve
 
-Implemented:
-- MiniPay-compatible frontend scaffold
-- Next.js app routes for landing, create, and portfolio flows
-- `PiggyBankFactory` contract for user vault creation and management
-- `PenaltyReserve` contract for transparent penalty accounting
-- time-decay penalty logic in contract and frontend helpers
-- wallet/network guard for Celo and Celo Sepolia
-- deployment modules for Sepolia and mainnet paths
-- local tests for vault creation, deposits, invalid inputs, and penalty behavior
-
-Verified locally on this machine:
-- `npx hardhat test` → **15/15 passing**
-- `npx hardhat compile` → **clean**
-- `npx tsc --noEmit` in `apps/web` → **clean**
-- `npx next build` in `apps/web` → **clean**
+The app and contract system are already live enough to demonstrate the mechanic, not just describe it.
 
 ## Current active Sepolia deployment
 MiniSave is currently wired to a fresh Celo Sepolia deployment using an existing mock stablecoin for test velocity.
@@ -117,11 +107,10 @@ MiniSave is currently wired to a fresh Celo Sepolia deployment using an existing
 - PiggyBankFactory:
   <https://celo-sepolia.blockscout.com/address/0x8379B08dc238010D0adE1E7E2B14e51be4DE85df>
 
-### What this deployment proves
+### What is live today
 - multiple vaults per user
 - stablecoin deposits into onchain commitment vaults
 - early withdrawal routed into a separate reserve contract
-- app wiring against real deployed contracts
 - MiniPay-native savings UX on Celo Sepolia
 
 ## Mainnet token note
@@ -130,44 +119,17 @@ Mainnet token choice is still being finalized for v1.
 Important correction:
 - `0x765de816845861e75a25fca122bb6898b8b1282a` on Celo mainnet is **cUSD**, not USDm
 
-So the mainnet stablecoin decision must be documented correctly before deployment.
+The mainnet stablecoin decision should be documented correctly in launch materials and app config before production rollout.
 
-Current direction:
-- keep v1 simple
-- choose one stablecoin for mainnet launch
-- deploy fresh mainnet `PenaltyReserve` and `PiggyBankFactory` using that final token address
-
-## Mainnet deployment note
-MiniSave will require a **fresh mainnet deployment**.
-
-Reason:
-- current deployed addresses are on **Celo Sepolia**
-- current testing uses a **mock token**
-- the factory stores token and reserve addresses at deployment time
-- moving to mainnet/final token means a clean new deployment, not an in-place change
-
-## Monorepo structure
-- `apps/web` — Next.js MiniPay frontend
-- `apps/contracts` — Hardhat contracts and deployment modules
-- `PRODUCT_SPEC.md` — product and submission narrative
-- `ARCHITECTURE.md` — technical plan
-- `SPRINT_48H.md` — sprint execution checklist
-
-## v1 scope freeze
-What v1 is:
+## v1 scope
+MiniSave v1 is intentionally narrow:
 - savings commitment vaults
 - stablecoin deposits
 - time-decay early exit penalty
 - public reserve architecture
 - MiniPay-native mobile UX
 
-What v1 is not:
-- yield farming product
-- reward redistribution engine
-- proxy-heavy upgrade system
-- complex multi-strategy vault protocol
-
-That simplicity is deliberate.
+It is deliberately not a yield farm, not a complex multi-strategy vault system, and not an over-engineered protocol. The first job is to make commitment saving feel obvious and useful.
 
 ## Roadmap
 ### v1 remaining work
@@ -219,11 +181,8 @@ MiniSave lets users create an onchain savings vault for a target amount and opti
 - strong fit for MiniPay’s mobile stablecoin audience
 - clear upgrade path from simple v1 to richer saver incentives later
 
-## Immediate real next steps
-The real next steps now are:
+## Next steps
 1. complete live Sepolia smoke testing end-to-end
 2. finalize mainnet token choice with correct labeling
 3. deploy mainnet contracts
 4. onboard real testers
-
-Not scaffold work. The core architecture is already built.
