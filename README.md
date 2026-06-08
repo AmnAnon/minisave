@@ -156,7 +156,7 @@ MiniSave v2 can expand in two directions:
    - locked stablecoins can be routed into conservative Celo-native yield strategies
    - savings stay productive while preserving the core penalty mechanic
 
-This yield direction is explicitly future roadmap only, not current v1 scope. Source: memory/2026-06-06.md#L1-L4
+This yield direction is explicitly future roadmap only, not current v1 scope.
 
 ## Positioning vs other savings protocols
 MiniSave is closer to a **behavioral savings tool** than a pure yield-maximizer.
