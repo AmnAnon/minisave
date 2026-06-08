@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import {
   Sparkles,
   TrendingUp,
   Wallet,
+  Waves,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NetworkGuard } from "@/components/network-guard";
@@ -56,9 +57,26 @@ type OptimisticState = {
   vaults: Record<number, VaultRecord>;
 };
 
+const STARTER_DEPOSIT_QUERY_KEY = "starterDeposit";
+
 function shortDate(deadline: bigint) {
   if (deadline === 0n) return "No deadline";
   return new Date(Number(deadline) * 1000).toLocaleDateString();
+}
+
+function weeksUntil(deadline: bigint) {
+  if (deadline === 0n) return null;
+  const diffMs = Number(deadline) * 1000 - Date.now();
+  if (diffMs <= 0) return 0;
+  return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 7)));
+}
+
+function formatPlannerAmount(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return `0 ${PRIMARY_STABLE_TOKEN.symbol}`;
+  return `${value.toLocaleString(undefined, {
+    minimumFractionDigits: value < 10 ? 1 : 0,
+    maximumFractionDigits: value < 10 ? 1 : 2,
+  })} ${PRIMARY_STABLE_TOKEN.symbol}`;
 }
 
 function formatOptimisticBalance(balanceFormatted: string | undefined, walletDelta: bigint) {
@@ -105,26 +123,101 @@ function ProgressRing({ percent, size = 80 }: { percent: number; size?: number }
   );
 }
 
-function StatsBar({ vaults, walletBalance, animateKey }: { vaults: VaultRecord[]; walletBalance?: string; animateKey: number }) {
+function PortfolioSummary({
+  stableWalletBalance,
+  gasWalletBalance,
+  vaults,
+  animateKey,
+}: {
+  stableWalletBalance?: string;
+  gasWalletBalance?: string;
+  vaults: VaultRecord[];
+  animateKey: number;
+}) {
   const totalDeposited = vaults.reduce((sum, vault) => sum + vault.deposited, 0n);
-  const completed = vaults.filter((vault) => vault.deposited >= vault.goalAmount).length;
+  const activeVaults = vaults.filter((vault) => vault.deposited > 0n).length;
+  const totalWalletDisplay = ((Number(stableWalletBalance || "0") || 0) + (Number(gasWalletBalance || "0") || 0)).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-      {[
-        { label: "Live positions", value: `${vaults.length}` },
-        { label: "Wallet dry powder", value: `${walletBalance ?? "0"} ${PRIMARY_STABLE_TOKEN.symbol}` },
-        { label: "Capital committed", value: `${formatTokenAmount(totalDeposited)} ${PRIMARY_STABLE_TOKEN.symbol}` },
-        { label: "Goals hit", value: `${completed}` },
-      ].map((item) => (
-        <div
-          key={`${item.label}-${animateKey}`}
-          className="rounded-[24px] border border-amber-500/15 bg-[linear-gradient(180deg,rgba(24,18,10,0.95),rgba(12,10,7,0.9))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.18)] animate-[stat-pop_420ms_ease-out]"
-        >
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/45">{item.label}</div>
-          <div className="mt-2 text-sm font-semibold text-amber-50">{item.value}</div>
+    <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <div
+        key={`portfolio-summary-${animateKey}`}
+        className="rounded-[30px] border border-amber-500/12 bg-[linear-gradient(180deg,rgba(15,12,8,0.94),rgba(9,7,4,0.9))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)] animate-[stat-pop_420ms_ease-out]"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Portfolio balance</div>
+            <div className="mt-3 text-4xl font-semibold tracking-tight text-amber-50">{totalWalletDisplay}</div>
+            <div className="mt-2 text-sm text-amber-100/55">Overall wallet balance across gas + available deposit assets</div>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/15 bg-amber-500/[0.05] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/65">
+            <TrendingUp className="h-3.5 w-3.5" /> live
+          </div>
         </div>
-      ))}
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-[22px] border border-amber-500/10 bg-black/20 p-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/38">
+              <Waves className="h-3.5 w-3.5 text-emerald-300" /> Gas token
+            </div>
+            <div className="mt-3 text-xl font-semibold text-amber-50">{gasWalletBalance ?? "0"}</div>
+            <div className="mt-1 text-sm text-amber-100/55">CELO available</div>
+          </div>
+          <div className="rounded-[22px] border border-amber-500/10 bg-black/20 p-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/38">
+              <PiggyBank className="h-3.5 w-3.5 text-amber-300" /> Deposit token
+            </div>
+            <div className="mt-3 text-xl font-semibold text-amber-50">{stableWalletBalance ?? "0"}</div>
+            <div className="mt-1 text-sm text-amber-100/55">{PRIMARY_STABLE_TOKEN.symbol} available in wallet</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[30px] border border-amber-500/12 bg-[linear-gradient(180deg,rgba(15,12,8,0.94),rgba(9,7,4,0.9))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Vault investments</div>
+            <div className="mt-1 text-sm text-amber-100/55">Compact live cards for capital already parked in vaults</div>
+          </div>
+          <div className="rounded-full border border-amber-500/15 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-100/60">
+            {activeVaults} active
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {vaults.slice(0, 3).map((vault) => {
+            const percent = progressPercent(vault);
+            const unlocked = vaultUnlocked(vault);
+            return (
+              <div key={`mini-vault-${vault.vaultId}-${animateKey}`} className="rounded-[24px] border border-amber-500/10 bg-black/20 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-base font-semibold text-amber-50">{vault.label}</div>
+                    <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-amber-200/38">{PRIMARY_STABLE_TOKEN.symbol} · vault #{vault.vaultId}</div>
+                  </div>
+                  <div className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-amber-100/60"}`}>
+                    {unlocked ? "Unlocked" : `${Math.round(percent)}%`}
+                  </div>
+                </div>
+                <div className="mt-3 text-xl font-semibold text-amber-50">{formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+                <div className="mt-1 text-sm text-amber-100/55">of {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol} goal</div>
+              </div>
+            );
+          })}
+          {vaults.length === 0 ? (
+            <div className="rounded-[24px] border border-amber-500/10 bg-black/20 p-4 text-sm text-amber-100/60">
+              No vault investments yet. Create one and start with a smaller first deposit — this flow is meant for gradual saving, not one-shot funding.
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-4 text-sm text-amber-100/58">
+          Capital parked: <strong>{formatTokenAmount(totalDeposited)} {PRIMARY_STABLE_TOKEN.symbol}</strong>
+        </div>
+      </div>
     </div>
   );
 }
@@ -256,6 +349,9 @@ function FirstDepositGuide({
 function VaultActionPanel({
   selectedVault,
   displayedWalletBalance,
+  suggestedDeposit,
+  jumpToDepositMode,
+  clearJumpToDepositMode,
   refetch,
   txState,
   setTxState,
@@ -266,6 +362,9 @@ function VaultActionPanel({
 }: {
   selectedVault: VaultRecord;
   displayedWalletBalance: string;
+  suggestedDeposit: string;
+  jumpToDepositMode: boolean;
+  clearJumpToDepositMode: () => void;
   refetch: () => Promise<unknown>;
   txState: TxBannerState;
   setTxState: (state: TxBannerState) => void;
@@ -281,6 +380,22 @@ function VaultActionPanel({
   const publicClient = usePublicClient({ chainId: targetChain.id });
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const starterSuggestions = selectedVault.goalAmount <= toTokenUnits("50") ? ["5", "10", "15", "20"] : ["10", "25", "50", "100"];
+
+  useEffect(() => {
+    if (!suggestedDeposit) return;
+    setAmount((current) => (current ? current : suggestedDeposit));
+  }, [suggestedDeposit]);
+
+  useEffect(() => {
+    if (!jumpToDepositMode) return;
+    const frame = window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [jumpToDepositMode, selectedVault.vaultId]);
 
   const { refetch: refetchWalletBalance } = useBalance({
     address,
@@ -307,6 +422,30 @@ function VaultActionPanel({
   const hasDeposit = selectedVault.deposited > 0n;
   const needsApproval = parsedAmount > 0n ? (!allowance || allowance < parsedAmount) : false;
   const remaining = selectedVault.goalAmount > selectedVault.deposited ? selectedVault.goalAmount - selectedVault.deposited : 0n;
+  const suggestedDepositValue = suggestedDeposit ? Number(suggestedDeposit) : 0;
+  const paceDepositsLeft = suggestedDepositValue > 0 ? Math.ceil(Number(formatTokenAmount(remaining)) / suggestedDepositValue) : null;
+  const weeksLeft = weeksUntil(selectedVault.deadline);
+  const remainingFormatted = Number(formatTokenAmount(remaining));
+  const plannerPresets = useMemo(() => {
+    if (remaining <= 0n) return [] as { label: string; amount: string; caption: string }[];
+
+    const fallbackBase = Math.max(remainingFormatted / 4, 10);
+    const weeklyTarget = weeksLeft && weeksLeft > 0 ? remainingFormatted / weeksLeft : fallbackBase;
+
+    return [
+      { label: "Casual", amount: Math.max(weeklyTarget * 0.7, 5).toFixed(weeksLeft && weeksLeft <= 4 ? 1 : 0), caption: "lighter weekly pace" },
+      { label: "Steady", amount: Math.max(weeklyTarget, 5).toFixed(weeksLeft && weeksLeft <= 4 ? 1 : 0), caption: weeksLeft ? `on track for ~${weeksLeft} week${weeksLeft === 1 ? "" : "s"}` : "balanced pace" },
+      { label: "Aggressive", amount: Math.max(weeklyTarget * 1.4, 10).toFixed(weeksLeft && weeksLeft <= 4 ? 1 : 0), caption: "faster target lock-in" },
+    ].map((preset) => ({
+      ...preset,
+      amount: `${Number(preset.amount)}`,
+    }));
+  }, [remaining, remainingFormatted, weeksLeft]);
+  const deadlinePlannerText = weeksLeft === null
+    ? "No deadline set, so use any pace you like."
+    : weeksLeft === 0
+      ? "Deadline is here or passed — any new deposit now just closes the remaining gap."
+      : `You’ve got about ${weeksLeft} week${weeksLeft === 1 ? "" : "s"} to finish this target.`;
   const unlocked = vaultUnlocked(selectedVault);
   const vaultId = BigInt(selectedVault.vaultId);
   const currentPenaltyBps = calculatePenaltyBps(selectedVault);
@@ -415,6 +554,7 @@ function VaultActionPanel({
         },
       });
       await syncAfterTx();
+      clearJumpToDepositMode();
       setTxState({
         kind: "success",
         title: hasDeposit ? "Deposit confirmed" : "First deposit confirmed",
@@ -489,11 +629,11 @@ function VaultActionPanel({
   }
 
   return (
-    <div className="mt-4 overflow-hidden rounded-[28px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(201,168,76,0.08),rgba(15,12,8,0.96))] p-5 shadow-[0_12px_40px_rgba(0,0,0,0.2)]">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <div className="mt-0 overflow-hidden rounded-[26px] border border-amber-400/16 bg-[linear-gradient(180deg,rgba(201,168,76,0.06),rgba(15,12,8,0.94))] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.16)] sm:p-4.5">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/40">Selected vault actions</div>
-          <h3 className="mt-2 break-words text-[28px] font-semibold leading-tight text-amber-50">{selectedVault.label}</h3>
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/38">Vault actions</div>
+          <h3 className="mt-1.5 break-words text-[24px] font-semibold leading-tight text-amber-50">{selectedVault.label}</h3>
           <p className="mt-2 max-w-xl text-sm text-amber-100/58">
             {isClosed
               ? "This vault is already closed. Select another live vault to continue."
@@ -507,9 +647,26 @@ function VaultActionPanel({
         </div>
       </div>
 
+      {jumpToDepositMode ? (
+        <div className="mt-4 rounded-[24px] border border-emerald-500/18 bg-emerald-500/[0.07] p-4 text-sm text-emerald-100 shadow-[0_10px_24px_rgba(24,120,74,0.16)]">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 rounded-full border border-emerald-400/20 bg-emerald-500/10 p-2 text-emerald-300">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300/80">Step 2 of 2</div>
+              <div className="mt-1 text-base font-semibold text-emerald-50">Your vault is ready — fund it now</div>
+              <p className="mt-1 leading-6 text-emerald-100/75">
+                We already selected <strong>{selectedVault.label}</strong> and preloaded your starter deposit. Approve once if needed, then make the first contribution.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <FirstDepositGuide selectedVault={selectedVault} displayedWalletBalance={displayedWalletBalance} hasDeposit={hasDeposit} />
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4 transition-all duration-300">
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Saved</div>
           <div className="mt-2 text-lg font-semibold text-amber-50">{formatTokenAmount(selectedVault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
@@ -536,7 +693,7 @@ function VaultActionPanel({
         </div>
       ) : null}
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
         <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Wallet balance</div>
           <div className="mt-2 text-lg font-semibold text-amber-50">{displayedWalletBalance} {PRIMARY_STABLE_TOKEN.symbol}</div>
@@ -557,27 +714,81 @@ function VaultActionPanel({
         </div>
       ) : null}
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <label className="grid gap-2 text-sm font-medium text-amber-100/80">
-          Deposit amount ({PRIMARY_STABLE_TOKEN.symbol})
-          <input
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            className="h-12 rounded-xl border border-amber-500/15 bg-black/20 px-4 text-amber-50 outline-none transition focus:border-amber-400/40"
-            placeholder={hasDeposit ? "10" : "Start with 5"}
-            inputMode="decimal"
-            disabled={isClosed}
-          />
-          {hasAmount ? (
-            <p className="text-xs text-amber-100/55">
-              {needsApproval
-                ? `Step 1: approve ${amount} ${PRIMARY_STABLE_TOKEN.symbol}.`
-                : `${hasDeposit ? "Step 2" : "First deposit"}: add ${amount} ${PRIMARY_STABLE_TOKEN.symbol} into vault #${selectedVault.vaultId}.`}
-            </p>
-          ) : !hasDeposit ? (
-            <p className="text-xs text-emerald-300/80">Tip: seed it once to unlock the live progress experience.</p>
+      <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-3">
+          <label className="grid gap-2 text-sm font-medium text-amber-100/80">
+            Deposit amount ({PRIMARY_STABLE_TOKEN.symbol})
+            <input
+              ref={inputRef}
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              className="h-12 rounded-xl border border-amber-500/15 bg-black/20 px-4 text-amber-50 outline-none transition focus:border-amber-400/40"
+              placeholder={hasDeposit ? "Add 25" : "Start with 10"}
+              inputMode="decimal"
+              disabled={isClosed}
+            />
+            {hasAmount ? (
+              <p className="text-xs text-amber-100/55">
+                {needsApproval
+                  ? `Step 1: approve ${amount} ${PRIMARY_STABLE_TOKEN.symbol}.`
+                  : `${hasDeposit ? "Top up" : "First deposit"}: add ${amount} ${PRIMARY_STABLE_TOKEN.symbol} into vault #${selectedVault.vaultId}.`}
+              </p>
+            ) : !hasDeposit ? (
+              <p className="text-xs text-emerald-300/80">Tip: start small, then keep returning to top up the goal over time.</p>
+            ) : (
+              <p className="text-xs text-amber-100/55">Add another contribution whenever you want to push the vault closer to target.</p>
+            )}
+          </label>
+
+          <div className="flex flex-wrap gap-2">
+            {starterSuggestions.map((value) => (
+              <button
+                key={`${selectedVault.vaultId}-${value}`}
+                type="button"
+                onClick={() => setAmount(value)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${amount === value ? "border-amber-400/30 bg-amber-500/10 text-amber-100" : "border-amber-500/15 bg-black/20 text-amber-100/60 hover:bg-amber-500/5"}`}
+                disabled={isClosed}
+              >
+                {hasDeposit ? `+${value}` : value} {PRIMARY_STABLE_TOKEN.symbol}
+              </button>
+            ))}
+          </div>
+
+          {paceDepositsLeft && remaining > 0n ? (
+            <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-3 text-xs leading-6 text-amber-100/58">
+              At roughly <strong>{suggestedDeposit || amount} {PRIMARY_STABLE_TOKEN.symbol}</strong> per deposit, you’re about <strong>{paceDepositsLeft} deposit{paceDepositsLeft === 1 ? "" : "s"}</strong> away from the target.
+            </div>
           ) : null}
-        </label>
+
+          {remaining > 0n ? (
+            <div className="grid gap-3 rounded-[24px] border border-emerald-500/12 bg-emerald-500/[0.05] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300/80">Pace planner</div>
+                  <div className="mt-1 text-sm font-medium text-emerald-50">Choose the saving rhythm you want this vault to follow</div>
+                </div>
+                <div className="rounded-full border border-emerald-500/18 bg-black/20 px-3 py-1 text-[11px] font-semibold text-emerald-200">
+                  {deadlinePlannerText}
+                </div>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-3">
+                {plannerPresets.map((preset) => (
+                  <button
+                    key={`${selectedVault.vaultId}-${preset.label}`}
+                    type="button"
+                    onClick={() => setAmount(preset.amount)}
+                    className={`rounded-2xl border px-3 py-3 text-left transition ${amount === preset.amount ? "border-emerald-400/30 bg-emerald-500/12 text-emerald-50" : "border-emerald-500/12 bg-black/20 text-emerald-100/75 hover:bg-emerald-500/[0.06]"}`}
+                  >
+                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300/80">{preset.label}</div>
+                    <div className="mt-1 text-base font-semibold">{formatPlannerAmount(Number(preset.amount))}</div>
+                    <div className="mt-1 text-xs text-emerald-100/55">{preset.caption}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         <div className="grid gap-3 self-end sm:grid-cols-2">
           <Button
@@ -627,12 +838,20 @@ export function VaultDashboard() {
   const [txState, setTxState] = useState<TxBannerState>({ kind: "idle", title: "" });
   const [optimisticState, setOptimisticState] = useState<OptimisticState>({ walletDelta: 0n, vaults: {} });
   const [statsAnimateKey, setStatsAnimateKey] = useState(0);
+  const [starterDepositSuggestion, setStarterDepositSuggestion] = useState("");
+  const [jumpToDepositMode, setJumpToDepositMode] = useState(false);
   const factoryAddress = resolveFactoryAddress();
 
   const { data: walletBalance, refetch: refetchWalletBalance } = useBalance({
     address,
     chainId: targetChain.id,
     token: PRIMARY_STABLE_TOKEN.address,
+    query: { enabled: Boolean(address && !isWrongChain), refetchInterval: 4000 },
+  });
+
+  const { data: gasBalance, refetch: refetchGasBalance } = useBalance({
+    address,
+    chainId: targetChain.id,
     query: { enabled: Boolean(address && !isWrongChain), refetchInterval: 4000 },
   });
 
@@ -666,7 +885,7 @@ export function VaultDashboard() {
   });
 
   async function refreshAll() {
-    await Promise.all([refetch(), refetchVaults(), refetchWalletBalance()]);
+    await Promise.all([refetch(), refetchVaults(), refetchWalletBalance(), refetchGasBalance()]);
     setOptimisticState({ walletDelta: 0n, vaults: {} });
     setStatsAnimateKey((current) => current + 1);
   }
@@ -759,6 +978,7 @@ export function VaultDashboard() {
     const label = searchParams.get("label");
     const goalAmount = searchParams.get("goalAmount");
     const deadline = searchParams.get("deadline");
+    const starterDeposit = searchParams.get(STARTER_DEPOSIT_QUERY_KEY) || "";
 
     if (optimistic === "1" && vaultIdParam && label && goalAmount) {
       const vaultId = Number(vaultIdParam);
@@ -778,6 +998,8 @@ export function VaultDashboard() {
         },
       }));
       setSelectedVaultId(vaultId);
+      setStarterDepositSuggestion(starterDeposit);
+      setJumpToDepositMode(true);
       setTxState({
         kind: "success",
         title: "Vault created",
@@ -791,6 +1013,18 @@ export function VaultDashboard() {
       setSelectedVaultId(vaults[0].vaultId);
     }
   }, [selectedVaultId, vaults]);
+
+  useEffect(() => {
+    if (!selectedVaultId) return;
+    const starterFromQuery = searchParams.get(STARTER_DEPOSIT_QUERY_KEY) || "";
+    if (starterFromQuery) setStarterDepositSuggestion(starterFromQuery);
+  }, [selectedVaultId, searchParams]);
+
+  useEffect(() => {
+    if (!jumpToDepositMode) return;
+    const selectedStillExists = vaults.some((vault) => vault.vaultId === selectedVaultId);
+    if (!selectedStillExists) setJumpToDepositMode(false);
+  }, [jumpToDepositMode, selectedVaultId, vaults]);
 
   const selectedVault = selectedVaultId !== null ? vaults.find((vault) => vault.vaultId === selectedVaultId) ?? null : vaults[0] ?? null;
   const isLoading = countLoading || vaultsLoading;
@@ -844,7 +1078,12 @@ export function VaultDashboard() {
         </div>
       </div>
 
-      <StatsBar vaults={vaults} walletBalance={displayedWalletBalance} animateKey={statsAnimateKey} />
+      <PortfolioSummary
+        stableWalletBalance={displayedWalletBalance}
+        gasWalletBalance={gasBalance?.formatted ? Number(gasBalance.formatted).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 }) : "0"}
+        vaults={vaults}
+        animateKey={statsAnimateKey}
+      />
 
       <div className="space-y-4">
         {isLoading ? (
@@ -857,6 +1096,7 @@ export function VaultDashboard() {
             const unlocked = vaultUnlocked(vault);
             const remainingDays = daysLeft(vault.deadline);
             const selected = selectedVaultId === vault.vaultId;
+            const remainingAmount = vault.goalAmount > vault.deposited ? vault.goalAmount - vault.deposited : 0n;
 
             return (
               <div
@@ -864,65 +1104,79 @@ export function VaultDashboard() {
                 className="space-y-0 animate-[vault-rise_420ms_ease-out_forwards] opacity-0"
                 style={{ animationDelay: `${Math.min(vault.vaultId * 70, 420)}ms` }}
               >
-                <button
-                  type="button"
-                  onClick={() => setSelectedVaultId(vault.vaultId)}
-                  className={`w-full rounded-[30px] border p-5 text-left transition ${
+                <div
+                  className={`w-full rounded-[30px] border text-left transition ${
                     selected
                       ? "border-amber-400/40 bg-[linear-gradient(180deg,rgba(201,168,76,0.09),rgba(18,14,10,0.98))] shadow-[0_18px_40px_rgba(0,0,0,0.22)]"
                       : "border-amber-500/10 bg-[linear-gradient(180deg,rgba(15,12,8,0.95),rgba(10,8,6,0.88))] hover:border-amber-500/25"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="break-words text-lg font-semibold text-amber-50">{vault.label}</div>
-                      <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-amber-200/40">
-                        {PRIMARY_STABLE_TOKEN.symbol} · {remainingDays === null ? "goal unlock" : `${remainingDays}d left`} · vault #{vault.vaultId}
-                      </div>
-                    </div>
-                    <div className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                      unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-amber-100/60"
-                    }`}>
-                      {unlocked ? "Unlocked" : <span className="inline-flex items-center gap-1"><LockKeyhole className="h-3 w-3" /> Locked</span>}
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-4 sm:grid-cols-[88px_1fr] sm:items-center">
-                    <div className="flex items-center justify-center sm:justify-start">
-                      <ProgressRing percent={percent} size={72} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-end justify-between gap-3">
-                        <div className="text-xl font-semibold text-amber-50">
-                          {formatTokenAmount(vault.deposited)} / {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVaultId(vault.vaultId)}
+                    className={`w-full p-5 text-left ${selected ? "pb-4" : ""}`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="break-words text-lg font-semibold text-amber-50">{vault.label}</div>
+                        <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-amber-200/40">
+                          {PRIMARY_STABLE_TOKEN.symbol} · {remainingDays === null ? "goal unlock" : `${remainingDays}d left`} · vault #{vault.vaultId}
                         </div>
-                        <div className="text-xs font-medium text-amber-100/45">{Math.round(percent)}%</div>
                       </div>
-                      <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/5">
-                        <div className="h-full rounded-full bg-[linear-gradient(90deg,#C9A84C,#E9CF7A)] transition-all duration-300" style={{ width: `${percent}%` }} />
-                      </div>
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-amber-100/58 sm:grid-cols-3">
-                        <div className="rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2">Target {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-                        <div className="rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2">Saved {formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-                        <div className="col-span-2 rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2 sm:col-span-1">{unlocked ? "Ready for clean withdraw" : `Penalty ${formatPenaltyPercent(calculatePenaltyBps(vault))}`}</div>
+                      <div className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
+                        unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-amber-100/60"
+                      }`}>
+                        {unlocked ? "Unlocked" : <span className="inline-flex items-center gap-1"><LockKeyhole className="h-3 w-3" /> Locked</span>}
                       </div>
                     </div>
-                  </div>
-                </button>
 
-                {selected && selectedVault ? (
-                  <VaultActionPanel
-                    selectedVault={vault}
-                    displayedWalletBalance={displayedWalletBalance}
-                    refetch={refreshAll}
-                    txState={txState}
-                    setTxState={setTxState}
-                    applyOptimisticDeposit={applyOptimisticDeposit}
-                    revertOptimisticDeposit={revertOptimisticDeposit}
-                    applyOptimisticWithdraw={applyOptimisticWithdraw}
-                    revertOptimisticWithdraw={revertOptimisticWithdraw}
-                  />
-                ) : null}
+                    <div className="mt-5 grid gap-4 sm:grid-cols-[88px_1fr] sm:items-center">
+                      <div className="flex items-center justify-center sm:justify-start">
+                        <ProgressRing percent={percent} size={72} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-end justify-between gap-3">
+                          <div className="text-xl font-semibold text-amber-50">
+                            {formatTokenAmount(vault.deposited)} / {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}
+                          </div>
+                          <div className="text-xs font-medium text-amber-100/45">{Math.round(percent)}%</div>
+                        </div>
+                        <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/5">
+                          <div className="h-full rounded-full bg-[linear-gradient(90deg,#C9A84C,#E9CF7A)] transition-all duration-300" style={{ width: `${percent}%` }} />
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-amber-100/58 sm:grid-cols-3">
+                          <div className="rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2">Target {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+                          <div className="rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2">Saved {formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+                          <div className="col-span-2 rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2 sm:col-span-1">{unlocked ? "Ready for clean withdraw" : `Penalty ${formatPenaltyPercent(calculatePenaltyBps(vault))}`}</div>
+                        </div>
+                        <div className="mt-3 rounded-2xl border border-emerald-500/12 bg-emerald-500/[0.05] px-3 py-2 text-xs text-emerald-100/80">
+                          {remainingAmount === 0n
+                            ? `Goal reached. You can keep it parked or withdraw cleanly when unlocked.`
+                            : `${formatTokenAmount(remainingAmount)} ${PRIMARY_STABLE_TOKEN.symbol} left to hit the target. Keep topping up with smaller deposits.`}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {selected && selectedVault ? (
+                    <div className="px-3 pb-3 sm:px-4 sm:pb-4">
+                      <VaultActionPanel
+                        selectedVault={vault}
+                        displayedWalletBalance={displayedWalletBalance}
+                        suggestedDeposit={starterDepositSuggestion}
+                        jumpToDepositMode={jumpToDepositMode}
+                        clearJumpToDepositMode={() => setJumpToDepositMode(false)}
+                        refetch={refreshAll}
+                        txState={txState}
+                        setTxState={setTxState}
+                        applyOptimisticDeposit={applyOptimisticDeposit}
+                        revertOptimisticDeposit={revertOptimisticDeposit}
+                        applyOptimisticWithdraw={applyOptimisticWithdraw}
+                        revertOptimisticWithdraw={revertOptimisticWithdraw}
+                      />
+                    </div>
+                  ) : null}
+                </div>
               </div>
             );
           })

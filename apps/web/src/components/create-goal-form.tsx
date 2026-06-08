@@ -60,7 +60,8 @@ export function CreateGoalForm() {
   const [deadline, setDeadline] = useState("");
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const [optimisticCreated, setOptimisticCreated] = useState<{ title: string; targetAmount: string; deadline: string } | null>(null);
+  const [starterDeposit, setStarterDeposit] = useState("25");
+  const [optimisticCreated, setOptimisticCreated] = useState<{ title: string; targetAmount: string; deadline: string; starterDeposit: string } | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [confettiBursts, setConfettiBursts] = useState<Array<{ id: number; left: string; delay: string; duration: string }>>([]);
 
@@ -122,6 +123,7 @@ export function CreateGoalForm() {
       title: title.trim(),
       targetAmount,
       deadline,
+      starterDeposit,
     };
 
     try {
@@ -158,6 +160,7 @@ export function CreateGoalForm() {
         label: optimisticVault.title,
         goalAmount: toTokenUnits(targetAmount).toString(),
         deadline: dateToUnixTimestamp(deadline).toString(),
+        starterDeposit,
       });
 
       setTimeout(() => {
@@ -217,15 +220,61 @@ export function CreateGoalForm() {
           </label>
 
           <label className="grid gap-2 rounded-[26px] border border-amber-500/12 bg-black/15 p-4 text-sm font-medium text-amber-100/75 sm:p-5">
-            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Target amount ({PRIMARY_STABLE_TOKEN.symbol})</span>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Target amount ({PRIMARY_STABLE_TOKEN.symbol})</span>
+              <span className="text-[11px] font-medium text-emerald-300/80">This is the goal, not the first deposit</span>
+            </div>
             <input
               value={targetAmount}
               onChange={(e) => setTargetAmount(e.target.value)}
               className="h-12 rounded-2xl border border-amber-500/15 bg-black/30 px-4 text-base text-amber-50 outline-none transition focus:border-amber-400/40 focus:bg-black/40"
-              placeholder="50"
+              placeholder="800"
               inputMode="decimal"
             />
+            <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-3 text-xs leading-6 text-amber-100/58">
+              Example: MacBook target = <strong>800 {PRIMARY_STABLE_TOKEN.symbol}</strong>. You can start with a smaller contribution now and keep topping up later.
+            </div>
           </label>
+
+          <div className="grid gap-3 rounded-[26px] border border-amber-500/12 bg-black/15 p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Starter deposit plan</div>
+                <div className="mt-1 text-sm text-amber-100/60">Optional now, but this is how the product should feel: target first, contribution second.</div>
+              </div>
+              <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-300">
+                Start small
+              </div>
+            </div>
+
+            <label className="grid gap-2 text-sm font-medium text-amber-100/75">
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Suggested first contribution ({PRIMARY_STABLE_TOKEN.symbol})</span>
+              <input
+                value={starterDeposit}
+                onChange={(e) => setStarterDeposit(e.target.value)}
+                className="h-12 rounded-2xl border border-amber-500/15 bg-black/30 px-4 text-base text-amber-50 outline-none transition focus:border-amber-400/40 focus:bg-black/40"
+                placeholder="25"
+                inputMode="decimal"
+              />
+            </label>
+
+            <div className="flex flex-wrap gap-2">
+              {["10", "25", "50", "100"].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setStarterDeposit(value)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${starterDeposit === value ? "border-amber-400/30 bg-amber-500/10 text-amber-100" : "border-amber-500/15 bg-black/20 text-amber-100/60 hover:bg-amber-500/5"}`}
+                >
+                  {value} {PRIMARY_STABLE_TOKEN.symbol}
+                </button>
+              ))}
+            </div>
+
+            <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-3 text-xs leading-6 text-amber-100/58">
+              Vault creation stays separate from funding onchain today, but the UI now frames the right habit: <strong>set the goal first</strong>, then return to Portfolio and keep adding smaller deposits over time.
+            </div>
+          </div>
 
           <label className="grid gap-2 rounded-[26px] border border-amber-500/12 bg-black/15 p-4 text-sm font-medium text-amber-100/75 sm:p-5">
             <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/45">Deadline (optional)</span>
@@ -238,6 +287,9 @@ export function CreateGoalForm() {
                 className="w-full bg-transparent text-base outline-none"
               />
             </div>
+            <div className="rounded-2xl border border-emerald-500/10 bg-emerald-500/[0.05] p-3 text-xs leading-6 text-emerald-100/70">
+              Add a deadline if you want the app to suggest a weekly saving pace. No deadline keeps the goal flexible.
+            </div>
           </label>
 
           <div className="grid gap-3 rounded-[26px] border border-amber-500/12 bg-[#151008]/95 p-5 text-sm text-amber-100/65">
@@ -249,6 +301,7 @@ export function CreateGoalForm() {
               <li>• Deposits use <strong>{PRIMARY_STABLE_TOKEN.symbol}</strong> only for this release.</li>
               <li>• Early exit starts at <strong>{BASE_PENALTY_BPS / 100}% and decays linearly to 0%</strong> by the deadline.</li>
               <li>• Hit the goal or outlast the timer to unlock cleanly.</li>
+              <li>• Best flow: create the target now, then keep topping up in smaller contributions.</li>
               <li>• Finish the vault and you become eligible for future reward-pool distribution in v2.</li>
             </ul>
           </div>
@@ -262,7 +315,7 @@ export function CreateGoalForm() {
                 <div>
                   <div className="font-semibold">{celebrate ? "Vault minted and routing to Portfolio" : "Optimistic vault draft ready"}</div>
                   <div className="mt-1 text-sm opacity-90">
-                    {optimisticCreated.title} · {optimisticCreated.targetAmount} {PRIMARY_STABLE_TOKEN.symbol} {optimisticCreated.deadline ? `· unlock ${optimisticCreated.deadline}` : "· no unlock date"}
+                    {optimisticCreated.title} · goal {optimisticCreated.targetAmount} {PRIMARY_STABLE_TOKEN.symbol} · start with {optimisticCreated.starterDeposit} {PRIMARY_STABLE_TOKEN.symbol} {optimisticCreated.deadline ? `· unlock ${optimisticCreated.deadline}` : "· no unlock date"}
                   </div>
                 </div>
               </div>
