@@ -54,8 +54,8 @@ export function Navbar() {
         </div>
       </header>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-amber-500/10 bg-[#090704]/95 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-3 gap-2 rounded-3xl border border-amber-500/10 bg-[#120f0b]/95 p-2 shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-amber-500/10 bg-[#090704]/92 px-3 pb-[calc(env(safe-area-inset-bottom)+0.9rem)] pt-3 backdrop-blur-xl md:hidden">
+        <div className="mx-auto grid max-w-lg grid-cols-3 gap-2 rounded-[28px] border border-amber-500/10 bg-[linear-gradient(180deg,rgba(18,15,11,0.98),rgba(9,7,4,0.96))] p-2 shadow-[0_14px_50px_rgba(0,0,0,0.38)]">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const active = pathname === link.href;
@@ -64,9 +64,9 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-3 text-[11px] font-medium transition ${
+                className={`flex flex-col items-center justify-center gap-1 rounded-[20px] px-3 py-3 text-[11px] font-medium transition ${
                   active
-                    ? "bg-amber-500/12 text-amber-300"
+                    ? "bg-amber-500/12 text-amber-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
                     : "text-amber-100/60 hover:bg-white/[0.03] hover:text-amber-50"
                 }`}
               >

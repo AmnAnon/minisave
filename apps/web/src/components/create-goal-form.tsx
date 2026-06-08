@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useAccount, useBalance, usePublicClient, useWriteContract } from "wagmi";
-import { ArrowRight, CalendarClock, ChevronRight, Gift, Loader2, PiggyBank, Sparkles, Target, Wallet } from "lucide-react";
+import { useAccount, useBalance, usePublicClient, useReadContract, useWriteContract } from "wagmi";
+import { ArrowRight, CalendarClock, CheckCircle2, ChevronRight, Gift, Loader2, PiggyBank, Sparkles, Target, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NetworkGuard } from "@/components/network-guard";
 import { explorerTxUrl } from "@/lib/chains";
@@ -44,7 +44,15 @@ export function CreateGoalForm() {
     address,
     chainId: targetChain.id,
     token: PRIMARY_STABLE_TOKEN.address,
-    query: { enabled: Boolean(address) },
+    query: { enabled: Boolean(address), refetchInterval: 4000 },
+  });
+  const { data: vaultCountData, refetch: refetchVaultCount } = useReadContract({
+    abi: piggyBankFactoryAbi,
+    address: factoryAddress || undefined,
+    chainId: targetChain.id,
+    functionName: "getVaultCount",
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(address && factoryAddress && !isWrongChain), refetchInterval: 4000 },
   });
 
   const [title, setTitle] = useState("Emergency Fund");
@@ -52,10 +60,27 @@ export function CreateGoalForm() {
   const [deadline, setDeadline] = useState("");
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [optimisticCreated, setOptimisticCreated] = useState<{ title: string; targetAmount: string; deadline: string } | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
+  const [confettiBursts, setConfettiBursts] = useState<Array<{ id: number; left: string; delay: string; duration: string }>>([]);
+
+  useEffect(() => {
+    if (!celebrate) return;
+    const bursts = Array.from({ length: 14 }, (_, index) => ({
+      id: index,
+      left: `${6 + index * 6.5}%`,
+      delay: `${(index % 5) * 70}ms`,
+      duration: `${1500 + (index % 4) * 220}ms`,
+    }));
+    setConfettiBursts(bursts);
+    const timer = window.setTimeout(() => setConfettiBursts([]), 2200);
+    return () => window.clearTimeout(timer);
+  }, [celebrate]);
 
   async function handleCreateGoal() {
     setError("");
     setStatus("");
+    setCelebrate(false);
 
     if (!isConnected || !address) {
       const message = "Connect with MiniPay or another wallet first.";
@@ -93,20 +118,29 @@ export function CreateGoalForm() {
       return;
     }
 
+    const optimisticVault = {
+      title: title.trim(),
+      targetAmount,
+      deadline,
+    };
+
     try {
-      setStatus("Waiting for wallet confirmation...");
+      setOptimisticCreated(optimisticVault);
+      setStatus("Vault drafted locally. Waiting for wallet confirmation...");
       toast.loading("Confirm vault creation in your wallet...", { id: "create-vault" });
       const hash = await writeContractAsync({
         address: factoryAddress,
         abi: piggyBankFactoryAbi,
         functionName: "createVault",
-        args: [title.trim(), toTokenUnits(targetAmount), dateToUnixTimestamp(deadline)],
+        args: [optimisticVault.title, toTokenUnits(targetAmount), dateToUnixTimestamp(deadline)],
       });
 
-      setStatus("Wallet confirmed. Waiting for onchain confirmation...");
+      setStatus("Wallet confirmed. Optimistic vault queued. Waiting for onchain confirmation...");
       await waitForConfirmedReceipt(publicClient, hash);
+      await refetchVaultCount();
+      setCelebrate(true);
 
-      const success = `Vault created. Tx: ${hash.slice(0, 10)}... Opening portfolio.`;
+      const success = `Vault created. Opening portfolio with your new vault pre-committed.`;
       setStatus(success);
       toast.success("Vault created successfully.", {
         id: "create-vault",
@@ -116,10 +150,21 @@ export function CreateGoalForm() {
           onClick: () => window.open(explorerTxUrl(hash, targetChain.id), "_blank", "noopener,noreferrer"),
         },
       });
+
+      const nextVaultId = Number(vaultCountData ?? 0n);
+      const payload = new URLSearchParams({
+        optimistic: "1",
+        vaultId: `${nextVaultId}`,
+        label: optimisticVault.title,
+        goalAmount: toTokenUnits(targetAmount).toString(),
+        deadline: dateToUnixTimestamp(deadline).toString(),
+      });
+
       setTimeout(() => {
-        router.push("/portfolio");
-      }, 1200);
+        router.push(`/portfolio?${payload.toString()}`);
+      }, 1400);
     } catch (err) {
+      setOptimisticCreated(null);
       const message = humanizeError(err);
       setError(message);
       toast.error(message, { id: "create-vault" });
@@ -128,7 +173,14 @@ export function CreateGoalForm() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-      <div className="rounded-[28px] border border-amber-500/15 bg-[#0f0c08]/92 p-6 shadow-[0_0_60px_rgba(0,0,0,0.2)] sm:p-8">
+      <div className={`relative overflow-hidden rounded-[28px] border border-amber-500/15 bg-[#0f0c08]/92 p-6 shadow-[0_0_60px_rgba(0,0,0,0.2)] sm:p-8 transition-all duration-500 ${celebrate ? "ring-1 ring-emerald-400/40 shadow-[0_0_80px_rgba(39,194,118,0.18)]" : ""}`}>
+        {confettiBursts.map((burst) => (
+          <span
+            key={burst.id}
+            className="pointer-events-none absolute top-0 h-3 w-1.5 rounded-full bg-[linear-gradient(180deg,#f8e08a,#4ade80)] opacity-0 animate-[confetti-fall_var(--dur)_ease-out_forwards]"
+            style={{ left: burst.left, animationDelay: burst.delay, ["--dur" as string]: burst.duration }}
+          />
+        ))}
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">
@@ -139,8 +191,8 @@ export function CreateGoalForm() {
               Set a goal, define an optional unlock date, and make your future self pay a small penalty if discipline breaks early.
             </p>
           </div>
-          <div className="hidden h-14 w-14 items-center justify-center rounded-3xl border border-amber-500/20 bg-amber-500/10 text-amber-300 sm:flex">
-            <PiggyBank className="h-6 w-6" />
+          <div className={`hidden h-14 w-14 items-center justify-center rounded-3xl border border-amber-500/20 bg-amber-500/10 text-amber-300 sm:flex transition-all duration-500 ${celebrate ? "scale-110 border-emerald-400/30 bg-emerald-500/10 text-emerald-300" : ""}`}>
+            {celebrate ? <CheckCircle2 className="h-6 w-6" /> : <PiggyBank className="h-6 w-6" />}
           </div>
         </div>
 
@@ -201,7 +253,23 @@ export function CreateGoalForm() {
             </ul>
           </div>
 
-          {status ? <p className="text-sm text-emerald-400">{status}</p> : null}
+          {optimisticCreated ? (
+            <div className={`rounded-[24px] border px-4 py-4 text-sm transition-all duration-500 ${celebrate ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-100" : "border-amber-500/15 bg-amber-500/[0.05] text-amber-100/75"}`}>
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 rounded-2xl p-2 ${celebrate ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/10 text-amber-200"}`}>
+                  {celebrate ? <CheckCircle2 className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                </div>
+                <div>
+                  <div className="font-semibold">{celebrate ? "Vault minted and routing to Portfolio" : "Optimistic vault draft ready"}</div>
+                  <div className="mt-1 text-sm opacity-90">
+                    {optimisticCreated.title} · {optimisticCreated.targetAmount} {PRIMARY_STABLE_TOKEN.symbol} {optimisticCreated.deadline ? `· unlock ${optimisticCreated.deadline}` : "· no unlock date"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {status ? <p className={`text-sm transition-colors duration-300 ${celebrate ? "text-emerald-300" : "text-emerald-400"}`}>{status}</p> : null}
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -240,9 +308,9 @@ export function CreateGoalForm() {
         <div className="rounded-[28px] border border-amber-500/15 bg-[#0f0c08]/92 p-6 text-sm text-amber-100/65">
           <div className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200/45">What happens after create</div>
           <div className="mt-4 space-y-3">
-            <p>1. Your vault transaction is submitted to {targetChain.name}.</p>
-            <p>2. Success UI only appears after the receipt is confirmed onchain.</p>
-            <p>3. The vault then shows up in <strong>Portfolio</strong> for approval, deposit, and withdrawal actions.</p>
+            <p>1. Your vault is drafted locally the moment you confirm intent.</p>
+            <p>2. Once the receipt lands, Portfolio opens with the new vault pre-selected.</p>
+            <p>3. Animated success state confirms chain sync before you deposit.</p>
           </div>
         </div>
       </div>
