@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, PiggyBank, PlusCircle, Sparkles, WalletCards } from "lucide-react";
-
+import { Home, PiggyBank, PlusCircle, WalletCards } from "lucide-react";
 import { ConnectButton } from "@/components/connect-button";
 import { targetChain } from "@/lib/chains";
 import { MINISAVE_APP_NAME } from "@/lib/minisave";
@@ -19,34 +18,32 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#090704]/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0d1117]/88 backdrop-blur-xl">
         <div className="container flex min-h-16 max-w-screen-2xl items-center justify-between px-4 py-2">
           <Link href="/" className="group flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300 shadow-[0_0_30px_rgba(201,168,76,0.15)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
               <PiggyBank className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold tracking-wide text-amber-50">{MINISAVE_APP_NAME}</div>
-              <div className="truncate text-[10px] uppercase tracking-[0.18em] text-amber-200/45">MiniPay Savings Vaults</div>
+              <div className="truncate text-sm font-semibold tracking-wide text-zinc-50">{MINISAVE_APP_NAME}</div>
+              <div className="truncate text-[10px] uppercase tracking-[0.18em] text-zinc-500">MiniPay savings vaults</div>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-8 md:flex">
+          <nav className="hidden items-center gap-6 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                  pathname === link.href ? "text-amber-300" : "text-amber-100/65 hover:text-amber-50"
-                }`}
+                className={`text-sm font-medium transition-colors ${pathname === link.href ? "text-emerald-300" : "text-zinc-400 hover:text-zinc-100"}`}
               >
                 {link.name}
               </Link>
             ))}
 
             <div className="flex items-center gap-3">
-              <div className="hidden items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300 lg:flex">
-                <Sparkles className="h-3.5 w-3.5" /> Live on {targetChain.name}
+              <div className="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400 lg:flex">
+                Live on {targetChain.name}
               </div>
               <ConnectButton />
             </div>
@@ -54,8 +51,8 @@ export function Navbar() {
         </div>
       </header>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-amber-500/10 bg-[#090704]/92 px-3 pb-[calc(env(safe-area-inset-bottom)+0.9rem)] pt-3 backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-3 gap-2 rounded-[28px] border border-amber-500/10 bg-[linear-gradient(180deg,rgba(18,15,11,0.98),rgba(9,7,4,0.96))] p-2 shadow-[0_14px_50px_rgba(0,0,0,0.38)]">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0d1117]/92 px-3 pb-[calc(env(safe-area-inset-bottom)+0.9rem)] pt-3 backdrop-blur-xl md:hidden">
+        <div className="mx-auto grid max-w-lg grid-cols-3 gap-2 rounded-[24px] border border-white/10 bg-black/30 p-2 shadow-[0_14px_50px_rgba(0,0,0,0.38)]">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const active = pathname === link.href;
@@ -64,10 +61,8 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex flex-col items-center justify-center gap-1 rounded-[20px] px-3 py-3 text-[11px] font-medium transition ${
-                  active
-                    ? "bg-amber-500/12 text-amber-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                    : "text-amber-100/60 hover:bg-white/[0.03] hover:text-amber-50"
+                className={`flex flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-3 text-[11px] font-medium transition ${
+                  active ? "bg-emerald-500/12 text-emerald-300" : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-100"
                 }`}
               >
                 <Icon className="h-4 w-4" />
