@@ -8,21 +8,21 @@ import { UserBalance } from "@/components/user-balance";
 export function HomeConnected() {
   return (
     <section className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-zinc-50">Your savings dashboard</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-400">
             Track wallet balances, review vault status, and move directly into your next action.
           </p>
         </div>
-        <div className="hidden gap-3 sm:flex">
-          <Button asChild>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button asChild className="w-full sm:w-auto">
             <Link href="/create">
               <Plus className="mr-2 h-4 w-4" />
               Create vault
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href="/portfolio">
               <WalletCards className="mr-2 h-4 w-4" />
               Open portfolio
