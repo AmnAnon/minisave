@@ -105,20 +105,20 @@ function ProgressRing({ percent, size = 80 }: { percent: number; size?: number }
   return (
     <div className="relative shrink-0" style={{ height: size, width: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={percent >= 100 ? "#4CAF8A" : "#C9A84C"}
+          stroke={percent >= 100 ? "#4CAF8A" : "#10b981"}
           strokeWidth={stroke}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-amber-200">{Math.round(percent)}%</div>
+      <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-zinc-200">{Math.round(percent)}%</div>
     </div>
   );
 }
@@ -145,44 +145,44 @@ function PortfolioSummary({
     <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
       <div
         key={`portfolio-summary-${animateKey}`}
-        className="rounded-[30px] border border-amber-500/12 bg-[linear-gradient(180deg,rgba(15,12,8,0.94),rgba(9,7,4,0.9))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)] animate-[stat-pop_420ms_ease-out]"
+        className="rounded-[30px] border border-white/10 bg-black/20 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.20)] animate-[stat-pop_420ms_ease-out]"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Portfolio balance</div>
-            <div className="mt-3 text-4xl font-semibold tracking-tight text-amber-50">{totalWalletDisplay}</div>
-            <div className="mt-2 text-sm text-amber-100/55">Overall wallet balance across gas + available deposit assets</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Portfolio balance</div>
+            <div className="mt-3 text-4xl font-semibold tracking-tight text-zinc-50">{totalWalletDisplay}</div>
+            <div className="mt-2 text-sm text-zinc-400">Overall wallet balance across gas + available deposit assets</div>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/15 bg-amber-500/[0.05] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/65">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/65">
             <TrendingUp className="h-3.5 w-3.5" /> live
           </div>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-[22px] border border-amber-500/10 bg-black/20 p-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/38">
+          <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/38">
               <Waves className="h-3.5 w-3.5 text-emerald-300" /> Gas token
             </div>
-            <div className="mt-3 text-xl font-semibold text-amber-50">{gasWalletBalance ?? "0"}</div>
-            <div className="mt-1 text-sm text-amber-100/55">CELO available</div>
+            <div className="mt-3 text-xl font-semibold text-zinc-50">{gasWalletBalance ?? "0"}</div>
+            <div className="mt-1 text-sm text-zinc-400">CELO available</div>
           </div>
-          <div className="rounded-[22px] border border-amber-500/10 bg-black/20 p-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/38">
-              <PiggyBank className="h-3.5 w-3.5 text-amber-300" /> Deposit token
+          <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/38">
+              <PiggyBank className="h-3.5 w-3.5 text-emerald-300" /> Deposit token
             </div>
-            <div className="mt-3 text-xl font-semibold text-amber-50">{stableWalletBalance ?? "0"}</div>
-            <div className="mt-1 text-sm text-amber-100/55">{PRIMARY_STABLE_TOKEN.symbol} available in wallet</div>
+            <div className="mt-3 text-xl font-semibold text-zinc-50">{stableWalletBalance ?? "0"}</div>
+            <div className="mt-1 text-sm text-zinc-400">{PRIMARY_STABLE_TOKEN.symbol} available in wallet</div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-[30px] border border-amber-500/12 bg-[linear-gradient(180deg,rgba(15,12,8,0.94),rgba(9,7,4,0.9))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+      <div className="rounded-[30px] border border-white/10 bg-black/20 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.20)]">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Vault investments</div>
-            <div className="mt-1 text-sm text-amber-100/55">Compact live cards for capital already parked in vaults</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Vault investments</div>
+            <div className="mt-1 text-sm text-zinc-400">Compact live cards for capital already parked in vaults</div>
           </div>
-          <div className="rounded-full border border-amber-500/15 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-100/60">
+          <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
             {activeVaults} active
           </div>
         </div>
@@ -192,29 +192,29 @@ function PortfolioSummary({
             const percent = progressPercent(vault);
             const unlocked = vaultUnlocked(vault);
             return (
-              <div key={`mini-vault-${vault.vaultId}-${animateKey}`} className="rounded-[24px] border border-amber-500/10 bg-black/20 p-4">
+              <div key={`mini-vault-${vault.vaultId}-${animateKey}`} className="rounded-[24px] border border-white/10 bg-black/20 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-base font-semibold text-amber-50">{vault.label}</div>
-                    <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-amber-200/38">{PRIMARY_STABLE_TOKEN.symbol} · vault #{vault.vaultId}</div>
+                    <div className="text-base font-semibold text-zinc-50">{vault.label}</div>
+                    <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-200/38">{PRIMARY_STABLE_TOKEN.symbol} · vault #{vault.vaultId}</div>
                   </div>
-                  <div className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-amber-100/60"}`}>
+                  <div className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-zinc-400"}`}>
                     {unlocked ? "Unlocked" : `${Math.round(percent)}%`}
                   </div>
                 </div>
-                <div className="mt-3 text-xl font-semibold text-amber-50">{formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-                <div className="mt-1 text-sm text-amber-100/55">of {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol} goal</div>
+                <div className="mt-3 text-xl font-semibold text-zinc-50">{formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+                <div className="mt-1 text-sm text-zinc-400">of {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol} goal</div>
               </div>
             );
           })}
           {vaults.length === 0 ? (
-            <div className="rounded-[24px] border border-amber-500/10 bg-black/20 p-4 text-sm text-amber-100/60">
+            <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 text-sm text-zinc-400">
               No vault investments yet. Create one and start with a smaller first deposit — this flow is meant for gradual saving, not one-shot funding.
             </div>
           ) : null}
         </div>
 
-        <div className="mt-4 text-sm text-amber-100/58">
+        <div className="mt-4 text-sm text-zinc-400">
           Capital parked: <strong>{formatTokenAmount(totalDeposited)} {PRIMARY_STABLE_TOKEN.symbol}</strong>
         </div>
       </div>
@@ -226,7 +226,7 @@ function TxBanner({ tx, chainId }: { tx: TxBannerState; chainId: number }) {
   if (tx.kind === "idle") return null;
 
   const palette = {
-    pending: "border-amber-400/30 bg-[linear-gradient(135deg,rgba(201,168,76,0.16),rgba(201,168,76,0.05))] text-amber-50",
+    pending: "border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(16,185,129,0.05))] text-zinc-50",
     success: "border-emerald-400/30 bg-[linear-gradient(135deg,rgba(27,151,94,0.22),rgba(27,151,94,0.08))] text-emerald-50",
     error: "border-red-400/30 bg-[linear-gradient(135deg,rgba(180,38,38,0.22),rgba(180,38,38,0.08))] text-red-50",
   } as const;
@@ -268,19 +268,19 @@ function TxBanner({ tx, chainId }: { tx: TxBannerState; chainId: number }) {
 
 function EmptyPortfolioState() {
   return (
-    <div className="relative overflow-hidden rounded-[32px] border border-amber-500/15 bg-[linear-gradient(180deg,rgba(15,12,8,0.96),rgba(10,8,6,0.92))] p-8 text-center shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(201,168,76,0.12),transparent_38%)]" />
-      <div className="pointer-events-none absolute left-1/2 top-10 h-32 w-32 -translate-x-1/2 rounded-full bg-amber-500/10 blur-3xl" />
+    <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/20 p-8 text-center shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_38%)]" />
+      <div className="pointer-events-none absolute left-1/2 top-10 h-32 w-32 -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
 
-      <div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[30px] border border-amber-500/20 bg-[linear-gradient(180deg,rgba(201,168,76,0.16),rgba(201,168,76,0.04))] shadow-[0_20px_50px_rgba(201,168,76,0.12)]">
-        <div className="absolute inset-4 rounded-[24px] border border-dashed border-amber-300/20" />
-        <PiggyBank className="h-10 w-10 text-amber-300" />
+      <div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[30px] border border-white/10 bg-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
+        <div className="absolute inset-4 rounded-[24px] border border-dashed border-white/10" />
+        <PiggyBank className="h-10 w-10 text-emerald-300" />
       </div>
 
       <div className="relative mt-6">
-        <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/45">No live vaults yet</div>
-        <h3 className="mt-3 text-3xl font-semibold text-amber-50">Start your first disciplined pocket</h3>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-amber-100/60">
+        <div className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-200/45">No live vaults yet</div>
+        <h3 className="mt-3 text-3xl font-semibold text-zinc-50">Start your first disciplined pocket</h3>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-400">
           Create one vault, fund it once, and Portfolio becomes your live command rail for deposits, penalties, and clean unlocks.
         </p>
       </div>
@@ -291,19 +291,19 @@ function EmptyPortfolioState() {
           { step: "02", title: "Approve + deposit", detail: `Approve ${PRIMARY_STABLE_TOKEN.symbol}, then seed the vault with the first amount.` },
           { step: "03", title: "Track the climb", detail: "Watch progress, avoid penalties, withdraw clean when unlocked." },
         ].map((item) => (
-          <div key={item.step} className="rounded-[24px] border border-amber-500/12 bg-black/20 p-4">
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200/40">{item.step}</div>
-            <div className="mt-2 text-sm font-semibold text-amber-50">{item.title}</div>
-            <div className="mt-2 text-sm leading-6 text-amber-100/55">{item.detail}</div>
+          <div key={item.step} className="rounded-[24px] border border-white/10 bg-black/20 p-4">
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">{item.step}</div>
+            <div className="mt-2 text-sm font-semibold text-zinc-50">{item.title}</div>
+            <div className="mt-2 text-sm leading-6 text-zinc-400">{item.detail}</div>
           </div>
         ))}
       </div>
 
       <div className="relative mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
+        <Button asChild className="bg-emerald-500 text-slate-950 hover:bg-emerald-400">
           <Link href="/create"><Plus className="mr-2 h-4 w-4" />Create first vault</Link>
         </Button>
-        <Button asChild variant="outline" className="border-amber-500/25 text-amber-100 hover:bg-amber-500/10">
+        <Button asChild variant="outline" className="border-white/10 text-zinc-100 hover:bg-white/5">
           <Link href="/create">
             View create flow
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -629,12 +629,12 @@ function VaultActionPanel({
   }
 
   return (
-    <div className="mt-0 overflow-hidden rounded-[26px] border border-amber-400/16 bg-[linear-gradient(180deg,rgba(201,168,76,0.06),rgba(15,12,8,0.94))] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.16)] sm:p-4.5">
+    <div className="mt-0 overflow-hidden rounded-[26px] border border-white/10 bg-black/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.16)] sm:p-4.5">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/38">Vault actions</div>
-          <h3 className="mt-1.5 break-words text-[24px] font-semibold leading-tight text-amber-50">{selectedVault.label}</h3>
-          <p className="mt-2 max-w-xl text-sm text-amber-100/58">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/38">Vault actions</div>
+          <h3 className="mt-1.5 break-words text-[24px] font-semibold leading-tight text-zinc-50">{selectedVault.label}</h3>
+          <p className="mt-2 max-w-xl text-sm text-zinc-400">
             {isClosed
               ? "This vault is already closed. Select another live vault to continue."
               : unlocked
@@ -667,26 +667,26 @@ function VaultActionPanel({
       <FirstDepositGuide selectedVault={selectedVault} displayedWalletBalance={displayedWalletBalance} hasDeposit={hasDeposit} />
 
       <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4 transition-all duration-300">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Saved</div>
-          <div className="mt-2 text-lg font-semibold text-amber-50">{formatTokenAmount(selectedVault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-all duration-300">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Saved</div>
+          <div className="mt-2 text-lg font-semibold text-zinc-50">{formatTokenAmount(selectedVault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
         </div>
-        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Remaining</div>
-          <div className="mt-2 text-lg font-semibold text-amber-50">{formatTokenAmount(remaining)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Remaining</div>
+          <div className="mt-2 text-lg font-semibold text-zinc-50">{formatTokenAmount(remaining)} {PRIMARY_STABLE_TOKEN.symbol}</div>
         </div>
-        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Penalty now</div>
-          <div className="mt-2 text-lg font-semibold text-amber-50">{formatPenaltyPercent(currentPenaltyBps)}</div>
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Penalty now</div>
+          <div className="mt-2 text-lg font-semibold text-zinc-50">{formatPenaltyPercent(currentPenaltyBps)}</div>
         </div>
-        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Deadline</div>
-          <div className="mt-2 text-lg font-semibold text-amber-50">{shortDate(selectedVault.deadline)}</div>
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Deadline</div>
+          <div className="mt-2 text-lg font-semibold text-zinc-50">{shortDate(selectedVault.deadline)}</div>
         </div>
       </div>
 
       {!unlocked ? (
-        <div className="mt-4 rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 text-sm text-amber-100/65">
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
           <div>Current penalty: <strong>{formatPenaltyPercent(currentPenaltyBps)}</strong> of any early withdrawal.</div>
           <div className="mt-1">Estimated amount right now: <strong>{formatTokenAmount(withdrawPenalty)} {PRIMARY_STABLE_TOKEN.symbol}</strong>.</div>
           <div className="mt-1">{penaltyFreeDays === null ? `No deadline set, so the ${BASE_PENALTY_BPS / 100}% base penalty stays flat.` : `Penalty-free in ${penaltyFreeDays} day${penaltyFreeDays === 1 ? "" : "s"}.`}</div>
@@ -694,41 +694,41 @@ function VaultActionPanel({
       ) : null}
 
       <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
-        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Wallet balance</div>
-          <div className="mt-2 text-lg font-semibold text-amber-50">{displayedWalletBalance} {PRIMARY_STABLE_TOKEN.symbol}</div>
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Wallet balance</div>
+          <div className="mt-2 text-lg font-semibold text-zinc-50">{displayedWalletBalance} {PRIMARY_STABLE_TOKEN.symbol}</div>
         </div>
-        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Withdraw now</div>
-          <div className="mt-2 text-lg font-semibold text-amber-50">{formatTokenAmount(netWithdraw)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Withdraw now</div>
+          <div className="mt-2 text-lg font-semibold text-zinc-50">{formatTokenAmount(netWithdraw)} {PRIMARY_STABLE_TOKEN.symbol}</div>
         </div>
-        <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/40">Reserve cut</div>
-          <div className="mt-2 text-lg font-semibold text-amber-50">{unlocked ? `0 ${PRIMARY_STABLE_TOKEN.symbol}` : `${formatTokenAmount(withdrawPenalty)} ${PRIMARY_STABLE_TOKEN.symbol}`}</div>
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Reserve cut</div>
+          <div className="mt-2 text-lg font-semibold text-zinc-50">{unlocked ? `0 ${PRIMARY_STABLE_TOKEN.symbol}` : `${formatTokenAmount(withdrawPenalty)} ${PRIMARY_STABLE_TOKEN.symbol}`}</div>
         </div>
       </div>
 
       {!unlocked && hasAmount ? (
-        <div className="mt-4 rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 text-sm text-amber-100/65">
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
           Early-exit preview: depositing {amount} {PRIMARY_STABLE_TOKEN.symbol} under a locked vault means a future break would cost roughly {formatTokenAmount(earlyPenaltyPreview)} {PRIMARY_STABLE_TOKEN.symbol} at the current {formatPenaltyPercent(currentPenaltyBps)} penalty.
         </div>
       ) : null}
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="grid gap-3">
-          <label className="grid gap-2 text-sm font-medium text-amber-100/80">
+          <label className="grid gap-2 text-sm font-medium text-zinc-300">
             Deposit amount ({PRIMARY_STABLE_TOKEN.symbol})
             <input
               ref={inputRef}
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
-              className="h-12 rounded-xl border border-amber-500/15 bg-black/20 px-4 text-amber-50 outline-none transition focus:border-amber-400/40"
+              className="h-12 rounded-xl border border-white/10 bg-black/20 px-4 text-zinc-50 outline-none transition focus:border-emerald-500/30"
               placeholder={hasDeposit ? "Add 25" : "Start with 10"}
               inputMode="decimal"
               disabled={isClosed}
             />
             {hasAmount ? (
-              <p className="text-xs text-amber-100/55">
+              <p className="text-xs text-zinc-400">
                 {needsApproval
                   ? `Step 1: approve ${amount} ${PRIMARY_STABLE_TOKEN.symbol}.`
                   : `${hasDeposit ? "Top up" : "First deposit"}: add ${amount} ${PRIMARY_STABLE_TOKEN.symbol} into vault #${selectedVault.vaultId}.`}
@@ -736,7 +736,7 @@ function VaultActionPanel({
             ) : !hasDeposit ? (
               <p className="text-xs text-emerald-300/80">Tip: start small, then keep returning to top up the goal over time.</p>
             ) : (
-              <p className="text-xs text-amber-100/55">Add another contribution whenever you want to push the vault closer to target.</p>
+              <p className="text-xs text-zinc-400">Add another contribution whenever you want to push the vault closer to target.</p>
             )}
           </label>
 
@@ -746,7 +746,7 @@ function VaultActionPanel({
                 key={`${selectedVault.vaultId}-${value}`}
                 type="button"
                 onClick={() => setAmount(value)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${amount === value ? "border-amber-400/30 bg-amber-500/10 text-amber-100" : "border-amber-500/15 bg-black/20 text-amber-100/60 hover:bg-amber-500/5"}`}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${amount === value ? "border-white/10 bg-white/5 text-zinc-100" : "border-white/10 bg-black/20 text-zinc-400 hover:bg-white/5"}`}
                 disabled={isClosed}
               >
                 {hasDeposit ? `+${value}` : value} {PRIMARY_STABLE_TOKEN.symbol}
@@ -755,7 +755,7 @@ function VaultActionPanel({
           </div>
 
           {paceDepositsLeft && remaining > 0n ? (
-            <div className="rounded-2xl border border-amber-500/10 bg-black/20 p-3 text-xs leading-6 text-amber-100/58">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs leading-6 text-zinc-400">
               At roughly <strong>{suggestedDeposit || amount} {PRIMARY_STABLE_TOKEN.symbol}</strong> per deposit, you’re about <strong>{paceDepositsLeft} deposit{paceDepositsLeft === 1 ? "" : "s"}</strong> away from the target.
             </div>
           ) : null}
@@ -795,7 +795,7 @@ function VaultActionPanel({
             type="button"
             onClick={needsApproval ? handleApprove : handleDeposit}
             disabled={isPending || isFetchingAllowance || !hasAmount || isClosed}
-            className="h-12 w-full bg-amber-500 text-black hover:bg-amber-400"
+            className="h-12 w-full bg-emerald-500 text-slate-950 hover:bg-emerald-400"
           >
             {isPending || isFetchingAllowance ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
             {needsApproval ? `Approve ${PRIMARY_STABLE_TOKEN.symbol}` : hasDeposit ? `Deposit ${PRIMARY_STABLE_TOKEN.symbol}` : `Make first deposit`}
@@ -805,7 +805,7 @@ function VaultActionPanel({
             onClick={handleWithdraw}
             disabled={isPending || isClosed || selectedVault.deposited === 0n}
             variant="outline"
-            className="h-12 w-full border-amber-500/30 text-amber-100 hover:bg-amber-500/10"
+            className="h-12 w-full border-white/10 text-zinc-100 hover:bg-white/5"
           >
             {unlocked ? <CheckCircle2 className="mr-2 h-4 w-4" /> : <AlertTriangle className="mr-2 h-4 w-4" />}
             {unlocked ? "Withdraw cleanly" : `Break early (-${formatPenaltyPercent(currentPenaltyBps)})`}
@@ -815,7 +815,7 @@ function VaultActionPanel({
 
       {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
       {txState.kind === "pending" ? (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-200 animate-pulse">
+        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-200 animate-pulse">
           <Clock3 className="h-3.5 w-3.5" />
           Processing onchain…
         </div>
@@ -1032,7 +1032,7 @@ export function VaultDashboard() {
 
   if (!isConnected) {
     return (
-      <div className="rounded-3xl border border-amber-500/15 bg-[#0f0c08]/90 p-8 text-center text-amber-100/65">
+      <div className="rounded-3xl border border-white/10 bg-black/20 p-8 text-center text-zinc-400">
         Connect with MiniPay to load your live vaults.
       </div>
     );
@@ -1040,7 +1040,7 @@ export function VaultDashboard() {
 
   if (!factoryAddress) {
     return (
-      <div className="rounded-3xl border border-amber-500/15 bg-[#0f0c08]/90 p-8 text-center text-amber-100/65">
+      <div className="rounded-3xl border border-white/10 bg-black/20 p-8 text-center text-zinc-400">
         Factory address missing. Set <code>NEXT_PUBLIC_FACTORY_ADDRESS</code> after deployment to enable live reads.
       </div>
     );
@@ -1051,27 +1051,27 @@ export function VaultDashboard() {
       <TxBanner tx={txState} chainId={targetChain.id} />
       <NetworkGuard />
 
-      <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.03] p-4 text-sm text-amber-100/65">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
         If a vault says it was created but does not appear yet, tap <strong>Refresh</strong> and confirm the transaction on the configured explorer from the tx status rail or wallet history.
       </div>
 
-      <div className="rounded-[30px] border border-amber-500/10 bg-[linear-gradient(180deg,rgba(15,12,8,0.92),rgba(9,7,4,0.88))] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.18)]">
+      <div className="rounded-[30px] border border-white/10 bg-black/20 p-5 shadow-[0_16px_50px_rgba(0,0,0,0.20)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/45">Portfolio</div>
-            <h2 className="mt-2 text-3xl font-semibold text-amber-50">Your live vaults</h2>
-            <p className="mt-2 max-w-2xl text-sm text-amber-100/55">
+            <div className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-200/45">Portfolio</div>
+            <h2 className="mt-2 text-3xl font-semibold text-zinc-50">Your live vaults</h2>
+            <p className="mt-2 max-w-2xl text-sm text-zinc-400">
               Every live vault from this wallet is listed here. Select one card and act directly below it.
             </p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-500/15 bg-amber-500/[0.06] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-200/70">
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-200/70">
               <TrendingUp className="h-3.5 w-3.5" /> Premium live portfolio rail
             </div>
           </div>
           <div className="flex gap-3">
-            <Button type="button" onClick={() => refreshAll()} variant="outline" className="border-amber-500/25 text-amber-100 hover:bg-amber-500/10">
+            <Button type="button" onClick={() => refreshAll()} variant="outline" className="border-white/10 text-zinc-100 hover:bg-white/5">
               <ArrowUpRight className="mr-2 h-4 w-4" /> Refresh
             </Button>
-            <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
+            <Button asChild className="bg-emerald-500 text-slate-950 hover:bg-emerald-400">
               <Link href="/create"><Plus className="mr-2 h-4 w-4" />New vault</Link>
             </Button>
           </div>
@@ -1087,7 +1087,7 @@ export function VaultDashboard() {
 
       <div className="space-y-4">
         {isLoading ? (
-          <div className="rounded-3xl border border-amber-500/10 bg-[#0f0c08]/80 p-6 text-sm text-amber-100/60">Loading vaults...</div>
+          <div className="rounded-3xl border border-white/10 bg-black/20 p-6 text-sm text-zinc-400">Loading vaults...</div>
         ) : vaults.length === 0 ? (
           <EmptyPortfolioState />
         ) : (
@@ -1107,8 +1107,8 @@ export function VaultDashboard() {
                 <div
                   className={`w-full rounded-[30px] border text-left transition ${
                     selected
-                      ? "border-amber-400/40 bg-[linear-gradient(180deg,rgba(201,168,76,0.09),rgba(18,14,10,0.98))] shadow-[0_18px_40px_rgba(0,0,0,0.22)]"
-                      : "border-amber-500/10 bg-[linear-gradient(180deg,rgba(15,12,8,0.95),rgba(10,8,6,0.88))] hover:border-amber-500/25"
+                      ? "border-emerald-500/30 bg-white/5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]"
+                      : "border-white/10 bg-black/20 hover:border-white/20"
                   }`}
                 >
                   <button
@@ -1118,13 +1118,13 @@ export function VaultDashboard() {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <div className="break-words text-lg font-semibold text-amber-50">{vault.label}</div>
-                        <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-amber-200/40">
+                        <div className="break-words text-lg font-semibold text-zinc-50">{vault.label}</div>
+                        <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-200/40">
                           {PRIMARY_STABLE_TOKEN.symbol} · {remainingDays === null ? "goal unlock" : `${remainingDays}d left`} · vault #{vault.vaultId}
                         </div>
                       </div>
                       <div className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                        unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-amber-100/60"
+                        unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-zinc-400"
                       }`}>
                         {unlocked ? "Unlocked" : <span className="inline-flex items-center gap-1"><LockKeyhole className="h-3 w-3" /> Locked</span>}
                       </div>
@@ -1136,18 +1136,18 @@ export function VaultDashboard() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-end justify-between gap-3">
-                          <div className="text-xl font-semibold text-amber-50">
+                          <div className="text-xl font-semibold text-zinc-50">
                             {formatTokenAmount(vault.deposited)} / {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}
                           </div>
-                          <div className="text-xs font-medium text-amber-100/45">{Math.round(percent)}%</div>
+                          <div className="text-xs font-medium text-zinc-500">{Math.round(percent)}%</div>
                         </div>
                         <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/5">
-                          <div className="h-full rounded-full bg-[linear-gradient(90deg,#C9A84C,#E9CF7A)] transition-all duration-300" style={{ width: `${percent}%` }} />
+                          <div className="h-full rounded-full bg-[linear-gradient(90deg,#10b981,#34d399)] transition-all duration-300" style={{ width: `${percent}%` }} />
                         </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-amber-100/58 sm:grid-cols-3">
-                          <div className="rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2">Target {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-                          <div className="rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2">Saved {formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-                          <div className="col-span-2 rounded-xl border border-amber-500/10 bg-black/15 px-3 py-2 sm:col-span-1">{unlocked ? "Ready for clean withdraw" : `Penalty ${formatPenaltyPercent(calculatePenaltyBps(vault))}`}</div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400 sm:grid-cols-3">
+                          <div className="rounded-xl border border-white/10 bg-black/15 px-3 py-2">Target {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+                          <div className="rounded-xl border border-white/10 bg-black/15 px-3 py-2">Saved {formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
+                          <div className="col-span-2 rounded-xl border border-white/10 bg-black/15 px-3 py-2 sm:col-span-1">{unlocked ? "Ready for clean withdraw" : `Penalty ${formatPenaltyPercent(calculatePenaltyBps(vault))}`}</div>
                         </div>
                         <div className="mt-3 rounded-2xl border border-emerald-500/12 bg-emerald-500/[0.05] px-3 py-2 text-xs text-emerald-100/80">
                           {remainingAmount === 0n
