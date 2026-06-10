@@ -87,6 +87,7 @@ contract PiggyBankFactory is ReentrancyGuard {
         Vault storage vault = _vault(msg.sender, vaultId);
         if (vault.withdrawn) revert VaultClosed();
 
+        vault.createdAt = (vault.createdAt * vault.deposited + block.timestamp * amount) / (vault.deposited + amount);
         vault.deposited += amount;
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 

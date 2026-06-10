@@ -35,13 +35,6 @@ export function HomeConnected() {
 
       <UserBalance />
 
-      <div className="space-y-3 rounded-3xl border border-white/10 bg-black/20 p-5">
-        <div className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">Vault activity</div>
-        <p className="text-sm text-zinc-400">
-          This section is driven by live wallet and vault reads only. If nothing exists yet, the portfolio state stays empty until you create your first vault.
-        </p>
-      </div>
-
       <VaultDashboard />
     </section>
   );

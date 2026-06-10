@@ -268,48 +268,8 @@ function TxBanner({ tx, chainId }: { tx: TxBannerState; chainId: number }) {
 
 function EmptyPortfolioState() {
   return (
-    <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/20 p-8 text-center shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_38%)]" />
-      <div className="pointer-events-none absolute left-1/2 top-10 h-32 w-32 -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
-
-      <div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[30px] border border-white/10 bg-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
-        <div className="absolute inset-4 rounded-[24px] border border-dashed border-white/10" />
-        <PiggyBank className="h-10 w-10 text-emerald-300" />
-      </div>
-
-      <div className="relative mt-6">
-        <div className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-200/45">No live vaults yet</div>
-        <h3 className="mt-3 text-3xl font-semibold text-zinc-50">Start your first disciplined pocket</h3>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-400">
-          Create one vault, fund it once, and Portfolio becomes your live command rail for deposits, penalties, and clean unlocks.
-        </p>
-      </div>
-
-      <div className="relative mt-7 grid gap-3 text-left sm:grid-cols-3">
-        {[
-          { step: "01", title: "Create vault", detail: "Name the goal, set target, optionally choose unlock date." },
-          { step: "02", title: "Approve + deposit", detail: `Approve ${PRIMARY_STABLE_TOKEN.symbol}, then seed the vault with the first amount.` },
-          { step: "03", title: "Track the climb", detail: "Watch progress, avoid penalties, withdraw clean when unlocked." },
-        ].map((item) => (
-          <div key={item.step} className="rounded-[24px] border border-white/10 bg-black/20 p-4">
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">{item.step}</div>
-            <div className="mt-2 text-sm font-semibold text-zinc-50">{item.title}</div>
-            <div className="mt-2 text-sm leading-6 text-zinc-400">{item.detail}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="relative mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Button asChild className="bg-emerald-500 text-slate-950 hover:bg-emerald-400">
-          <Link href="/create"><Plus className="mr-2 h-4 w-4" />Create first vault</Link>
-        </Button>
-        <Button asChild variant="outline" className="border-white/10 text-zinc-100 hover:bg-white/5">
-          <Link href="/create">
-            View create flow
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-6 text-center text-sm text-zinc-400">
+      No active vaults yet.
     </div>
   );
 }
@@ -629,201 +589,82 @@ function VaultActionPanel({
   }
 
   return (
-    <div className="mt-0 overflow-hidden rounded-[26px] border border-white/10 bg-black/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.16)] sm:p-4.5">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/38">Vault actions</div>
-          <h3 className="mt-1.5 break-words text-[24px] font-semibold leading-tight text-zinc-50">{selectedVault.label}</h3>
-          <p className="mt-2 max-w-xl text-sm text-zinc-400">
-            {isClosed
-              ? "This vault is already closed. Select another live vault to continue."
-              : unlocked
-                ? "Unlocked. You can withdraw the full balance cleanly."
-                : `Locked. Early exit is currently ${formatPenaltyPercent(currentPenaltyBps)} and decays to 0% by unlock.`}
+    <div className="mt-3 pt-3 border-t border-white/5 space-y-4">
+      {jumpToDepositMode ? (
+        <div className="rounded-xl border border-emerald-500/18 bg-emerald-500/[0.05] p-3 text-xs text-emerald-100">
+          <p className="font-semibold text-emerald-50">Vault ready — fund it now</p>
+          <p className="mt-1 text-emerald-100/70">
+            We already preloaded your starter deposit. Approve once if needed, then make the contribution.
           </p>
         </div>
-        <div className="hidden sm:block">
-          <ProgressRing percent={progressPercent(selectedVault)} size={64} />
-        </div>
-      </div>
+      ) : null}
 
-      {jumpToDepositMode ? (
-        <div className="mt-4 rounded-[24px] border border-emerald-500/18 bg-emerald-500/[0.07] p-4 text-sm text-emerald-100 shadow-[0_10px_24px_rgba(24,120,74,0.16)]">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 rounded-full border border-emerald-400/20 bg-emerald-500/10 p-2 text-emerald-300">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300/80">Step 2 of 2</div>
-              <div className="mt-1 text-base font-semibold text-emerald-50">Your vault is ready — fund it now</div>
-              <p className="mt-1 leading-6 text-emerald-100/75">
-                We already selected <strong>{selectedVault.label}</strong> and preloaded your starter deposit. Approve once if needed, then make the first contribution.
-              </p>
-            </div>
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-[11px] text-zinc-500">
+            <span>Deposit amount ({PRIMARY_STABLE_TOKEN.symbol})</span>
+            <span>Wallet: {displayedWalletBalance} {PRIMARY_STABLE_TOKEN.symbol}</span>
           </div>
-        </div>
-      ) : null}
-
-      <FirstDepositGuide selectedVault={selectedVault} displayedWalletBalance={displayedWalletBalance} hasDeposit={hasDeposit} />
-
-      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-all duration-300">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Saved</div>
-          <div className="mt-2 text-lg font-semibold text-zinc-50">{formatTokenAmount(selectedVault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Remaining</div>
-          <div className="mt-2 text-lg font-semibold text-zinc-50">{formatTokenAmount(remaining)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Penalty now</div>
-          <div className="mt-2 text-lg font-semibold text-zinc-50">{formatPenaltyPercent(currentPenaltyBps)}</div>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Deadline</div>
-          <div className="mt-2 text-lg font-semibold text-zinc-50">{shortDate(selectedVault.deadline)}</div>
-        </div>
-      </div>
-
-      {!unlocked ? (
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
-          <div>Current penalty: <strong>{formatPenaltyPercent(currentPenaltyBps)}</strong> of any early withdrawal.</div>
-          <div className="mt-1">Estimated amount right now: <strong>{formatTokenAmount(withdrawPenalty)} {PRIMARY_STABLE_TOKEN.symbol}</strong>.</div>
-          <div className="mt-1">{penaltyFreeDays === null ? `No deadline set, so the ${BASE_PENALTY_BPS / 100}% base penalty stays flat.` : `Penalty-free in ${penaltyFreeDays} day${penaltyFreeDays === 1 ? "" : "s"}.`}</div>
-        </div>
-      ) : null}
-
-      <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Wallet balance</div>
-          <div className="mt-2 text-lg font-semibold text-zinc-50">{displayedWalletBalance} {PRIMARY_STABLE_TOKEN.symbol}</div>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Withdraw now</div>
-          <div className="mt-2 text-lg font-semibold text-zinc-50">{formatTokenAmount(netWithdraw)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Reserve cut</div>
-          <div className="mt-2 text-lg font-semibold text-zinc-50">{unlocked ? `0 ${PRIMARY_STABLE_TOKEN.symbol}` : `${formatTokenAmount(withdrawPenalty)} ${PRIMARY_STABLE_TOKEN.symbol}`}</div>
-        </div>
-      </div>
-
-      {!unlocked && hasAmount ? (
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
-          Early-exit preview: depositing {amount} {PRIMARY_STABLE_TOKEN.symbol} under a locked vault means a future break would cost roughly {formatTokenAmount(earlyPenaltyPreview)} {PRIMARY_STABLE_TOKEN.symbol} at the current {formatPenaltyPercent(currentPenaltyBps)} penalty.
-        </div>
-      ) : null}
-
-      <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="grid gap-3">
-          <label className="grid gap-2 text-sm font-medium text-zinc-300">
-            Deposit amount ({PRIMARY_STABLE_TOKEN.symbol})
+          <div className="flex gap-2">
             <input
               ref={inputRef}
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
-              className="h-12 rounded-xl border border-white/10 bg-black/20 px-4 text-zinc-50 outline-none transition focus:border-emerald-500/30"
+              className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-zinc-50 outline-none transition focus:border-emerald-500/30"
               placeholder={hasDeposit ? "Add 25" : "Start with 10"}
               inputMode="decimal"
               disabled={isClosed}
             />
-            {hasAmount ? (
-              <p className="text-xs text-zinc-400">
-                {needsApproval
-                  ? `Step 1: approve ${amount} ${PRIMARY_STABLE_TOKEN.symbol}.`
-                  : `${hasDeposit ? "Top up" : "First deposit"}: add ${amount} ${PRIMARY_STABLE_TOKEN.symbol} into vault #${selectedVault.vaultId}.`}
-              </p>
-            ) : !hasDeposit ? (
-              <p className="text-xs text-emerald-300/80">Tip: start small, then keep returning to top up the goal over time.</p>
-            ) : (
-              <p className="text-xs text-zinc-400">Add another contribution whenever you want to push the vault closer to target.</p>
-            )}
-          </label>
-
-          <div className="flex flex-wrap gap-2">
-            {starterSuggestions.map((value) => (
-              <button
-                key={`${selectedVault.vaultId}-${value}`}
-                type="button"
-                onClick={() => setAmount(value)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${amount === value ? "border-white/10 bg-white/5 text-zinc-100" : "border-white/10 bg-black/20 text-zinc-400 hover:bg-white/5"}`}
-                disabled={isClosed}
-              >
-                {hasDeposit ? `+${value}` : value} {PRIMARY_STABLE_TOKEN.symbol}
-              </button>
-            ))}
+            <div className="flex gap-1.5">
+              {starterSuggestions.map((value) => (
+                <button
+                  key={`${selectedVault.vaultId}-${value}`}
+                  type="button"
+                  onClick={() => setAmount(value)}
+                  className={`rounded-lg border px-2.5 text-xs font-semibold transition ${amount === value ? "border-white/20 bg-white/10 text-zinc-100" : "border-white/10 bg-black/20 text-zinc-400 hover:bg-white/5"}`}
+                  disabled={isClosed}
+                >
+                  {hasDeposit ? `+${value}` : value}
+                </button>
+              ))}
+            </div>
           </div>
-
-          {paceDepositsLeft && remaining > 0n ? (
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs leading-6 text-zinc-400">
-              At roughly <strong>{suggestedDeposit || amount} {PRIMARY_STABLE_TOKEN.symbol}</strong> per deposit, you’re about <strong>{paceDepositsLeft} deposit{paceDepositsLeft === 1 ? "" : "s"}</strong> away from the target.
-            </div>
-          ) : null}
-
-          {remaining > 0n ? (
-            <div className="grid gap-3 rounded-[24px] border border-emerald-500/12 bg-emerald-500/[0.05] p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300/80">Pace planner</div>
-                  <div className="mt-1 text-sm font-medium text-emerald-50">Choose the saving rhythm you want this vault to follow</div>
-                </div>
-                <div className="rounded-full border border-emerald-500/18 bg-black/20 px-3 py-1 text-[11px] font-semibold text-emerald-200">
-                  {deadlinePlannerText}
-                </div>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-3">
-                {plannerPresets.map((preset) => (
-                  <button
-                    key={`${selectedVault.vaultId}-${preset.label}`}
-                    type="button"
-                    onClick={() => setAmount(preset.amount)}
-                    className={`rounded-2xl border px-3 py-3 text-left transition ${amount === preset.amount ? "border-emerald-400/30 bg-emerald-500/12 text-emerald-50" : "border-emerald-500/12 bg-black/20 text-emerald-100/75 hover:bg-emerald-500/[0.06]"}`}
-                  >
-                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300/80">{preset.label}</div>
-                    <div className="mt-1 text-base font-semibold">{formatPlannerAmount(Number(preset.amount))}</div>
-                    <div className="mt-1 text-xs text-emerald-100/55">{preset.caption}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="grid gap-3 self-end sm:grid-cols-2">
-          <Button
-            type="button"
-            onClick={needsApproval ? handleApprove : handleDeposit}
-            disabled={isPending || isFetchingAllowance || !hasAmount || isClosed}
-            className="h-12 w-full bg-emerald-500 text-slate-950 hover:bg-emerald-400"
-          >
-            {isPending || isFetchingAllowance ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
-            {needsApproval ? `Approve ${PRIMARY_STABLE_TOKEN.symbol}` : hasDeposit ? `Deposit ${PRIMARY_STABLE_TOKEN.symbol}` : `Make first deposit`}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleWithdraw}
-            disabled={isPending || isClosed || selectedVault.deposited === 0n}
-            variant="outline"
-            className="h-12 w-full border-white/10 text-zinc-100 hover:bg-white/5"
-          >
-            {unlocked ? <CheckCircle2 className="mr-2 h-4 w-4" /> : <AlertTriangle className="mr-2 h-4 w-4" />}
-            {unlocked ? "Withdraw cleanly" : `Break early (-${formatPenaltyPercent(currentPenaltyBps)})`}
-          </Button>
         </div>
       </div>
 
-      {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Button
+          type="button"
+          onClick={needsApproval ? handleApprove : handleDeposit}
+          disabled={isPending || isFetchingAllowance || !hasAmount || isClosed}
+          className="h-10 bg-emerald-500 text-slate-950 hover:bg-emerald-400 text-xs font-semibold"
+        >
+          {isPending || isFetchingAllowance ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Wallet className="mr-1 h-3.5 w-3.5" />}
+          {needsApproval ? `Approve ${PRIMARY_STABLE_TOKEN.symbol}` : hasDeposit ? `Deposit ${PRIMARY_STABLE_TOKEN.symbol}` : `Make first deposit`}
+        </Button>
+        <Button
+          type="button"
+          onClick={handleWithdraw}
+          disabled={isPending || isClosed || selectedVault.deposited === 0n}
+          variant="outline"
+          className="h-10 border-white/10 text-zinc-100 hover:bg-white/5 text-xs font-semibold"
+        >
+          {unlocked ? <CheckCircle2 className="mr-1 h-3.5 w-3.5 text-emerald-400" /> : <AlertTriangle className="mr-1 h-3.5 w-3.5 text-amber-500" />}
+          {unlocked ? "Withdraw cleanly" : `Break early (-${formatPenaltyPercent(currentPenaltyBps)})`}
+        </Button>
+      </div>
+
+      {error ? <p className="text-xs text-red-400">{error}</p> : null}
       {txState.kind === "pending" ? (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-200 animate-pulse">
-          <Clock3 className="h-3.5 w-3.5" />
+        <div className="inline-flex items-center gap-1.5 text-xs text-zinc-400 animate-pulse">
+          <Clock3 className="h-3 w-3" />
           Processing onchain…
         </div>
       ) : null}
       {txState.kind === "success" ? (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-200">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          Synced with latest onchain balance
+        <div className="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
+          <CheckCircle2 className="h-3 w-3" />
+          Synced onchain
         </div>
       ) : null}
     </div>
@@ -1078,12 +919,7 @@ export function VaultDashboard() {
         </div>
       </div>
 
-      <PortfolioSummary
-        stableWalletBalance={displayedWalletBalance}
-        gasWalletBalance={gasBalance?.formatted ? Number(gasBalance.formatted).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 }) : "0"}
-        vaults={vaults}
-        animateKey={statsAnimateKey}
-      />
+
 
       <div className="space-y-4">
         {isLoading ? (
@@ -1130,29 +966,26 @@ export function VaultDashboard() {
                       </div>
                     </div>
 
-                    <div className="mt-5 grid gap-4 sm:grid-cols-[88px_1fr] sm:items-center">
-                      <div className="flex items-center justify-center sm:justify-start">
-                        <ProgressRing percent={percent} size={72} />
+                    <div className="mt-4 grid grid-cols-[80px_1fr] gap-4 items-center">
+                      <div className="shrink-0">
+                        <ProgressRing percent={percent} size={80} />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-end justify-between gap-3">
-                          <div className="text-xl font-semibold text-zinc-50">
-                            {formatTokenAmount(vault.deposited)} / {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}
-                          </div>
-                          <div className="text-xs font-medium text-zinc-500">{Math.round(percent)}%</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400">
+                        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2">
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Saved</div>
+                          <div className="mt-0.5 font-bold text-zinc-200">{formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
                         </div>
-                        <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/5">
-                          <div className="h-full rounded-full bg-[linear-gradient(90deg,#10b981,#34d399)] transition-all duration-300" style={{ width: `${percent}%` }} />
+                        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2">
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Target</div>
+                          <div className="mt-0.5 font-bold text-zinc-200">{formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}</div>
                         </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400 sm:grid-cols-3">
-                          <div className="rounded-xl border border-white/10 bg-black/15 px-3 py-2">Target {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-                          <div className="rounded-xl border border-white/10 bg-black/15 px-3 py-2">Saved {formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-                          <div className="col-span-2 rounded-xl border border-white/10 bg-black/15 px-3 py-2 sm:col-span-1">{unlocked ? "Ready for clean withdraw" : `Penalty ${formatPenaltyPercent(calculatePenaltyBps(vault))}`}</div>
+                        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2">
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Penalty</div>
+                          <div className="mt-0.5 font-bold text-zinc-200">{unlocked ? "0%" : formatPenaltyPercent(calculatePenaltyBps(vault))}</div>
                         </div>
-                        <div className="mt-3 rounded-2xl border border-emerald-500/12 bg-emerald-500/[0.05] px-3 py-2 text-xs text-emerald-100/80">
-                          {remainingAmount === 0n
-                            ? `Goal reached. You can keep it parked or withdraw cleanly when unlocked.`
-                            : `${formatTokenAmount(remainingAmount)} ${PRIMARY_STABLE_TOKEN.symbol} left to hit the target. Keep topping up with smaller deposits.`}
+                        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2">
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Timeline</div>
+                          <div className="mt-0.5 font-bold text-zinc-200">{remainingDays === null ? "No deadline" : `${remainingDays}d left`}</div>
                         </div>
                       </div>
                     </div>

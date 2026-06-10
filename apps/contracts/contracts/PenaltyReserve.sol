@@ -27,7 +27,7 @@ contract PenaltyReserve is Ownable {
 
     function setFactory(address _factory) external onlyOwner {
         if (_factory == address(0)) revert InvalidAddress();
-        if (factory != address(0)) revert FactoryAlreadySet();
+        if (factory != address(0) && totalPenalties > 0) revert FactoryAlreadySet();
         factory = _factory;
         emit FactorySet(_factory);
     }

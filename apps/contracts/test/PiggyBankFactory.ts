@@ -212,6 +212,46 @@ describe("PiggyBankFactory", function () {
 
     await expect(factory.write.withdraw([0n])).to.be.rejected;
   });
+
+  it("applies ~8 percent penalty for a late deposit under weighted average createdAt", async function () {
+    const { factory, reserve, token, owner } = await loadFixture(deployFixture);
+    
+    // Create vault with 100 days lock
+    const deadline = BigInt((await time.latest()) + Number(ONE_HUNDRED_DAYS));
+    await factory.write.createVault(["Late Big Deposit", 20_000n * 10_000n, deadline]);
+    
+    // Day 0: Deposit 1 unit
+    await factory.write.deposit([0n, 1n]);
+    
+    // Advance time to 99% elapsed (99 days)
+    await time.increase(Number((ONE_HUNDRED_DAYS * 99n) / 100n));
+    
+    // Deposit 10,000 units
+    const depositAmount = 10_000n;
+    await factory.write.deposit([0n, depositAmount]);
+    
+    const totalDeposited = 10_001n;
+    
+    const ownerBefore = await token.read.balanceOf([owner.account.address]);
+    const reserveBefore = await token.read.balanceOf([reserve.address]);
+    
+    // Withdraw early
+    await factory.write.withdraw([0n]);
+    
+    const ownerAfter = await token.read.balanceOf([owner.account.address]);
+    const reserveAfter = await token.read.balanceOf([reserve.address]);
+    
+    const ownerDelta = ownerAfter - ownerBefore;
+    const reserveDelta = reserveAfter - reserveBefore;
+    
+    // With weighted average:
+    // nextCreatedAt = (createdAt * 1 + now * 10000) / 10001
+    // At 99% elapsed, the penalty BPS should be extremely close to 8% (the full base penalty).
+    const expectedPenalty = (totalDeposited * BASE_PENALTY_BPS) / 10_000n; // ~800n
+    
+    expect(reserveDelta >= expectedPenalty - 10n && reserveDelta <= expectedPenalty + 10n).to.equal(true);
+    expect(ownerDelta >= (totalDeposited - expectedPenalty) - 10n && ownerDelta <= (totalDeposited - expectedPenalty) + 10n).to.equal(true);
+  });
 });
 
 describe("PenaltyReserve", function () {
@@ -228,20 +268,32 @@ describe("PenaltyReserve", function () {
   }
 
   it("sets the factory once and emits the event", async function () {
-    const { reserve, publicClient, reserveOwner, other } = await loadFixture(deployFixture);
+    const { reserve, publicClient, reserveOwner, other, owner } = await loadFixture(deployFixture);
 
-    const hash = await reserve.write.setFactory([other.account.address], {
+    let hash = await reserve.write.setFactory([other.account.address], {
       account: reserveOwner.account,
     });
-    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    let receipt = await publicClient.waitForTransactionReceipt({ hash });
 
     expect((await reserve.read.factory()).toLowerCase()).to.equal(other.account.address.toLowerCase());
-    await expect(
-      reserve.write.setFactory([reserveOwner.account.address], { account: reserveOwner.account }),
-    ).to.be.rejected;
 
     const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("FactorySet(address)")));
     expect(event).to.not.equal(undefined);
+
+    // Resetting should be allowed as long as totalPenalties is 0
+    hash = await reserve.write.setFactory([owner.account.address], {
+      account: reserveOwner.account,
+    });
+    receipt = await publicClient.waitForTransactionReceipt({ hash });
+    expect((await reserve.read.factory()).toLowerCase()).to.equal(owner.account.address.toLowerCase());
+
+    // Mock receiving a penalty from the current factory (owner)
+    await reserve.write.receivePenalty([100n], { account: owner.account });
+
+    // Now that totalPenalties > 0, resetting should revert
+    await expect(
+      reserve.write.setFactory([other.account.address], { account: reserveOwner.account }),
+    ).to.be.rejected;
   });
 
   it("tracks penalties only when called by the configured factory", async function () {
