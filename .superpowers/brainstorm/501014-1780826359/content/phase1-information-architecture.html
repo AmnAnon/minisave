@@ -1,0 +1,121 @@
+
+<h2>MiniSave Phase 1: Trust-First Information Architecture</h2>
+<p class="subtitle">Default posture: consumer-safe for mobile stablecoin regulars, with progressive onchain detail</p>
+
+<div class="section">
+  <div class="mockup">
+    <div class="mockup-header">Global Trust Rail</div>
+    <div class="mockup-body">
+      <div style="display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px;">
+        <div class="placeholder" style="padding:12px;">Target chain<br><strong>Celo Sepolia</strong></div>
+        <div class="placeholder" style="padding:12px;">Factory<br><strong>Verified</strong></div>
+        <div class="placeholder" style="padding:12px;">Reserve<br><strong>Live balance</strong></div>
+        <div class="placeholder" style="padding:12px;">Explorer proof<br><strong>Open links</strong></div>
+      </div>
+      <p style="margin:0;color:#b7c0d1;">This rail stays visible near all money-moving screens and answers the first trust questions before users ask them.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-image">
+      <div class="mockup-header">Home</div>
+      <div class="mockup-body">
+        <div class="label">Primary goal</div>
+        <h3 style="margin:6px 0 10px;">Confidence before action</h3>
+        <div class="mock-content">Explain what a vault is, where funds go, and why the penalty exists.</div>
+        <div class="mock-button" style="margin-top:12px;">How MiniSave works</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Trust narrative</h3>
+      <p>Home becomes a proof surface, not just a landing page: chain, contract, reserve, and funds-path explainers.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-image">
+      <div class="mockup-header">Create</div>
+      <div class="mockup-body">
+        <div class="mock-input">Vault title</div>
+        <div class="mock-input" style="margin-top:10px;">Target amount</div>
+        <div class="placeholder" style="margin-top:10px;padding:14px;">Penalty preview + unlock conditions</div>
+        <div class="mock-button" style="margin-top:12px;">Review vault terms</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Pre-commit clarity</h3>
+      <p>Before signing, users should see exactly when withdrawals are clean, when penalties apply, and what contract they are about to use.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-image">
+      <div class="mockup-header">Portfolio</div>
+      <div class="mockup-body">
+        <div class="placeholder" style="padding:12px;">Vault status: Locked / Unlocked / Closed</div>
+        <div class="placeholder" style="padding:12px;margin-top:10px;">Next best action: Approve / Deposit / Withdraw</div>
+        <div class="mock-button" style="margin-top:12px;">Open verification drawer</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Action with proof</h3>
+      <p>Portfolio stays operational, but every action sits next to verification and state explanation rather than raw buttons alone.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:26px;">
+  <h3>Phase 1 modules</h3>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="funds-path" onclick="toggleSelect(this)">
+      <div class="letter">1</div>
+      <div class="content">
+        <h3>Funds Path Module</h3>
+        <p>Wallet → Factory custody → Reserve on early exit.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="contract-proof" onclick="toggleSelect(this)">
+      <div class="letter">2</div>
+      <div class="content">
+        <h3>Contract Proof Module</h3>
+        <p>Verified addresses, network, token, explorer deep links.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="penalty-clarity" onclick="toggleSelect(this)">
+      <div class="letter">3</div>
+      <div class="content">
+        <h3>Penalty Clarity Module</h3>
+        <p>Plain-language cost, unlock rules, and examples before risky actions.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:26px;">
+  <h3>Does this section look right so far?</h3>
+  <div class="options">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Yes, keep this direction</h3>
+        <p>Trust rail and proof modules feel right.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Make it denser</h3>
+        <p>Show more onchain detail by default.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Make it lighter</h3>
+        <p>Keep proof available, but reduce visible surface area.</p>
+      </div>
+    </div>
+  </div>
+</div>
