@@ -4,13 +4,14 @@ pragma solidity ^0.8.28;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {PenaltyReserve} from "./PenaltyReserve.sol";
 
-contract PiggyBankFactory is ReentrancyGuard {
+contract PiggyBankFactory is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     uint256 public constant BPS_DENOMINATOR = 10_000;
-    uint256 public constant BASE_PENALTY_BPS = 800;
+    uint256 public BASE_PENALTY_BPS = 800;
 
     struct Vault {
         string label;
@@ -50,11 +51,16 @@ contract PiggyBankFactory is ReentrancyGuard {
     error VaultNotFound();
     error VaultClosed();
 
-    constructor(address _token, address _penaltyReserve) {
+    constructor(address _token, address _penaltyReserve) Ownable(msg.sender) {
         if (_token == address(0) || _penaltyReserve == address(0)) revert InvalidAddress();
 
         token = _token;
         penaltyReserve = _penaltyReserve;
+    }
+
+    function setBasePenaltyBps(uint256 nextBps) external onlyOwner {
+        if (nextBps > BPS_DENOMINATOR) revert InvalidAmount();
+        BASE_PENALTY_BPS = nextBps;
     }
 
     function createVault(

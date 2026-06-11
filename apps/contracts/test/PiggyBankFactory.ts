@@ -252,6 +252,19 @@ describe("PiggyBankFactory", function () {
     expect(reserveDelta >= expectedPenalty - 10n && reserveDelta <= expectedPenalty + 10n).to.equal(true);
     expect(ownerDelta >= (totalDeposited - expectedPenalty) - 10n && ownerDelta <= (totalDeposited - expectedPenalty) + 10n).to.equal(true);
   });
+
+  it("allows owner to change base penalty BPS, and blocks stranger", async function () {
+    const { factory, owner, stranger } = await loadFixture(deployFixture);
+
+    expect(await factory.read.BASE_PENALTY_BPS()).to.equal(800n);
+
+    await factory.write.setBasePenaltyBps([500n], { account: owner.account });
+    expect(await factory.read.BASE_PENALTY_BPS()).to.equal(500n);
+
+    await expect(
+      factory.write.setBasePenaltyBps([600n], { account: stranger.account })
+    ).to.be.rejected;
+  });
 });
 
 describe("PenaltyReserve", function () {

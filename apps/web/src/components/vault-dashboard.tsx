@@ -31,6 +31,7 @@ import {
   estimatePenaltyAmount,
   formatPenaltyPercent,
   formatTokenAmount,
+  fromTokenUnits,
   penaltyFreeInDays,
   piggyBankFactoryAbi,
   progressPercent,
@@ -415,6 +416,15 @@ function VaultActionPanel({
   const withdrawPenalty = estimatePenaltyAmount(selectedVault, selectedVault.deposited);
   const netWithdraw = unlocked ? selectedVault.deposited : selectedVault.deposited - withdrawPenalty;
 
+  const balanceExceeded = hasAmount && parsedAmount > toTokenUnits(displayedWalletBalance);
+
+  const handleMaxClick = () => {
+    const walletMax = Number(displayedWalletBalance || "0");
+    const remainingMax = fromTokenUnits(remaining);
+    const maxVal = remainingMax > 0 && remainingMax < walletMax ? remainingMax : walletMax;
+    setAmount(maxVal.toString());
+  };
+
   async function syncAfterTx() {
     await Promise.all([refetchAllowance(), refetchWalletBalance(), refetch()]);
   }
@@ -608,13 +618,24 @@ function VaultActionPanel({
           <div className="flex gap-2">
             <input
               ref={inputRef}
+              type="number"
+              step="any"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
               className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-zinc-50 outline-none transition focus:border-emerald-500/30"
               placeholder={hasDeposit ? "Add 25" : "Start with 10"}
               inputMode="decimal"
+              pattern="[0-9]*"
               disabled={isClosed}
             />
+            <button
+              type="button"
+              onClick={handleMaxClick}
+              className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+              disabled={isClosed}
+            >
+              MAX
+            </button>
             <div className="flex gap-1.5">
               {starterSuggestions.map((value) => (
                 <button
@@ -629,6 +650,11 @@ function VaultActionPanel({
               ))}
             </div>
           </div>
+          {balanceExceeded ? (
+            <p className="text-[11px] font-medium text-red-400 animate-pulse">
+              Warning: Amount exceeds your available wallet balance.
+            </p>
+          ) : null}
         </div>
       </div>
 
