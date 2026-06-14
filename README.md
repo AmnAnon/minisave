@@ -107,9 +107,9 @@ MiniSave is currently wired to a fresh Celo Sepolia deployment using an existing
 
 | Contract | Address |
 |---|---|
-| PenaltyReserve | _to be added_ |
-| PiggyBankFactory | _to be added_ |
-| Stable token (cUSD) | [`0x765DE816845861e75A25fCA122bb6898B8B1282a`](https://celoscan.io/address/0x765DE816845861e75A25fCA122bb6898B8B1282a) |
+| PenaltyReserve | [`0xB1bC2dA89f912cCF02Be29502Ce6B5ff57a566C6`](https://celoscan.io/address/0xB1bC2dA89f912cCF02Be29502Ce6B5ff57a566C6) |
+| PiggyBankFactory | [`0x995Ca2D73744B0Fa1942Fe5A2e10d6a709f7963f`](https://celoscan.io/address/0x995Ca2D73744B0Fa1942Fe5A2e10d6a709f7963f) |
+| Stable token (cUSD) | [`0x765de816845861e75a25fca122bb6898b8b1282a`](https://celoscan.io/token/0x765de816845861e75a25fca122bb6898b8b1282a) |
 
 > **Note on stablecoin addresses**: `0x765DE816845861e75A25fCA122bb6898B8B1282a` is **cUSD** on Celo mainnet.
 > The USDm / Mento dollar address is `0x765de816845861e75a25fca122bb6898b8b1282a` (same contract — cUSD *is* the Mento dollar).
