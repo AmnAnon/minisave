@@ -94,38 +94,32 @@ The app and contract system are already live enough to demonstrate the mechanic,
 ## Current active Sepolia deployment
 MiniSave is currently wired to a fresh Celo Sepolia deployment using an existing mock stablecoin for test velocity.
 
-### Contracts
-- **Mock USD (test token):** `0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003`
-- **PenaltyReserve:** `0x7eC901e27655ADf1Ce7032648b6A753e2F2651C8`
-- **PiggyBankFactory:** `0x8379B08dc238010D0adE1E7E2B14e51be4DE85df`
+### Celo Sepolia contracts
+| Contract | Address |
+|---|---|
+| Mock USD (test token) | [`0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003`](https://celo-sepolia.blockscout.com/address/0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003#code) |
+| PenaltyReserve | [`0x7eC901e27655ADf1Ce7032648b6A753e2F2651C8`](https://celo-sepolia.blockscout.com/address/0x7eC901e27655ADf1Ce7032648b6A753e2F2651C8) |
+| PiggyBankFactory | [`0x8379B08dc238010D0adE1E7E2B14e51be4DE85df`](https://celo-sepolia.blockscout.com/address/0x8379B08dc238010D0adE1E7E2B14e51be4DE85df) |
 
-### Explorer links
-- Mock USD:
-  <https://celo-sepolia.blockscout.com/address/0x24a4aA28f0bE53f6466BFa681f94aDdb1F26F003#code>
-- PenaltyReserve:
-  <https://celo-sepolia.blockscout.com/address/0x7eC901e27655ADf1Ce7032648b6A753e2F2651C8>
-- PiggyBankFactory:
-  <https://celo-sepolia.blockscout.com/address/0x8379B08dc238010D0adE1E7E2B14e51be4DE85df>
+## Celo Mainnet deployment
+> Contracts will be deployed to Celo Mainnet as part of the submission flow.
+> Addresses and Celoscan links will be added here immediately after deployment.
 
-### What is live today
-- multiple vaults per user
-- stablecoin deposits into onchain commitment vaults
-- early withdrawal routed into a separate reserve contract
-- MiniPay-native savings UX on Celo Sepolia
+| Contract | Address |
+|---|---|
+| PenaltyReserve | _to be added_ |
+| PiggyBankFactory | _to be added_ |
+| Stable token (cUSD) | [`0x765DE816845861e75A25fCA122bb6898B8B1282a`](https://celoscan.io/address/0x765DE816845861e75A25fCA122bb6898B8B1282a) |
 
-## Mainnet token note
-Mainnet token choice is still being finalized for v1.
-
-Important correction:
-- `0x765de816845861e75a25fca122bb6898b8b1282a` on Celo mainnet is **cUSD**, not USDm
-
-The mainnet stablecoin decision should be documented correctly in launch materials and app config before production rollout.
+> **Note on stablecoin addresses**: `0x765DE816845861e75A25fCA122bb6898B8B1282a` is **cUSD** on Celo mainnet.
+> The USDm / Mento dollar address is `0x765de816845861e75a25fca122bb6898b8b1282a` (same contract — cUSD *is* the Mento dollar).
+> The app token is configurable via `NEXT_PUBLIC_DEFAULT_TOKEN_ADDRESS` at deploy time.
 
 ## v1 scope
 MiniSave v1 is intentionally narrow:
 - savings commitment vaults
 - stablecoin deposits
-- time-decay early exit penalty
+- time-decay early exit penalty (8% base, minimum 1% floor, configurable by owner)
 - public reserve architecture
 - MiniPay-native mobile UX
 
@@ -135,9 +129,7 @@ It is deliberately not a yield farm, not a complex multi-strategy vault system, 
 ### v1 remaining work
 - complete live Sepolia smoke test in MiniPay
 - verify approve / create / deposit / withdraw flows on device
-- polish awkward mobile create-form layout
-- capture clean screenshots/demo material
-- deploy on Celo mainnet
+- deploy contracts on Celo mainnet and add addresses above
 - onboard first real testers
 
 ### v1.1

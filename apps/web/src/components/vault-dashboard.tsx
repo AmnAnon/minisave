@@ -14,12 +14,10 @@ import {
   ExternalLink,
   Loader2,
   LockKeyhole,
-  PiggyBank,
   Plus,
   Sparkles,
   TrendingUp,
   Wallet,
-  Waves,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NetworkGuard } from "@/components/network-guard";
@@ -124,104 +122,6 @@ function ProgressRing({ percent, size = 80 }: { percent: number; size?: number }
   );
 }
 
-function PortfolioSummary({
-  stableWalletBalance,
-  gasWalletBalance,
-  vaults,
-  animateKey,
-}: {
-  stableWalletBalance?: string;
-  gasWalletBalance?: string;
-  vaults: VaultRecord[];
-  animateKey: number;
-}) {
-  const totalDeposited = vaults.reduce((sum, vault) => sum + vault.deposited, 0n);
-  const activeVaults = vaults.filter((vault) => vault.deposited > 0n).length;
-  const totalWalletDisplay = ((Number(stableWalletBalance || "0") || 0) + (Number(gasWalletBalance || "0") || 0)).toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-
-  return (
-    <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-      <div
-        key={`portfolio-summary-${animateKey}`}
-        className="rounded-[30px] border border-white/10 bg-black/20 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.20)] animate-[stat-pop_420ms_ease-out]"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Portfolio balance</div>
-            <div className="mt-3 text-4xl font-semibold tracking-tight text-zinc-50">{totalWalletDisplay}</div>
-            <div className="mt-2 text-sm text-zinc-400">Overall wallet balance across gas + available deposit assets</div>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/65">
-            <TrendingUp className="h-3.5 w-3.5" /> live
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/38">
-              <Waves className="h-3.5 w-3.5 text-emerald-300" /> Gas token
-            </div>
-            <div className="mt-3 text-xl font-semibold text-zinc-50">{gasWalletBalance ?? "0"}</div>
-            <div className="mt-1 text-sm text-zinc-400">CELO available</div>
-          </div>
-          <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-200/38">
-              <PiggyBank className="h-3.5 w-3.5 text-emerald-300" /> Deposit token
-            </div>
-            <div className="mt-3 text-xl font-semibold text-zinc-50">{stableWalletBalance ?? "0"}</div>
-            <div className="mt-1 text-sm text-zinc-400">{PRIMARY_STABLE_TOKEN.symbol} available in wallet</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-[30px] border border-white/10 bg-black/20 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.20)]">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-200/40">Vault investments</div>
-            <div className="mt-1 text-sm text-zinc-400">Compact live cards for capital already parked in vaults</div>
-          </div>
-          <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-            {activeVaults} active
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          {vaults.slice(0, 3).map((vault) => {
-            const percent = progressPercent(vault);
-            const unlocked = vaultUnlocked(vault);
-            return (
-              <div key={`mini-vault-${vault.vaultId}-${animateKey}`} className="rounded-[24px] border border-white/10 bg-black/20 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-base font-semibold text-zinc-50">{vault.label}</div>
-                    <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-200/38">{PRIMARY_STABLE_TOKEN.symbol} · vault #{vault.vaultId}</div>
-                  </div>
-                  <div className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${unlocked ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-zinc-400"}`}>
-                    {unlocked ? "Unlocked" : `${Math.round(percent)}%`}
-                  </div>
-                </div>
-                <div className="mt-3 text-xl font-semibold text-zinc-50">{formatTokenAmount(vault.deposited)} {PRIMARY_STABLE_TOKEN.symbol}</div>
-                <div className="mt-1 text-sm text-zinc-400">of {formatTokenAmount(vault.goalAmount)} {PRIMARY_STABLE_TOKEN.symbol} goal</div>
-              </div>
-            );
-          })}
-          {vaults.length === 0 ? (
-            <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 text-sm text-zinc-400">
-              No vault investments yet. Create one and start with a smaller first deposit — this flow is meant for gradual saving, not one-shot funding.
-            </div>
-          ) : null}
-        </div>
-
-        <div className="mt-4 text-sm text-zinc-400">
-          Capital parked: <strong>{formatTokenAmount(totalDeposited)} {PRIMARY_STABLE_TOKEN.symbol}</strong>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function TxBanner({ tx, chainId }: { tx: TxBannerState; chainId: number }) {
   if (tx.kind === "idle") return null;

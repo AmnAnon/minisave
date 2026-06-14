@@ -33,7 +33,8 @@ pnpm deploy:celo
 
 - Immutable stable-token address.
 - Immutable penalty-reserve address.
-- Immutable 8% base penalty with linear time decay to zero at deadline.
+- Configurable base early-exit penalty: 8% default, minimum 1% floor, maximum 100%, owner-only via `setBasePenaltyBps`.
+- Penalty decays linearly from the base rate to 0% as the vault approaches its deadline.
 - Creates multiple vaults per owner.
 - Accepts deposits and applies an early-withdraw penalty unless the goal has been reached or the deadline has passed.
 

@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { WagmiProvider, createConfig, http, injected, useConnect } from "wagmi";
+import { fallback } from "viem";
 import { supportedChains } from "@/lib/chains";
 
 const [mainnetChain, sepoliaChain] = supportedChains;
@@ -11,8 +12,14 @@ const wagmiConfig = createConfig({
   chains: [...supportedChains],
   connectors: [injected()],
   transports: {
-    [mainnetChain.id]: http(mainnetChain.rpcUrls.default.http[0]),
-    [sepoliaChain.id]: http(sepoliaChain.rpcUrls.default.http[0]),
+    [mainnetChain.id]: fallback([
+      http(mainnetChain.rpcUrls.default.http[0]),
+      http("https://rpc.ankr.com/celo"),
+    ]),
+    [sepoliaChain.id]: fallback([
+      http(sepoliaChain.rpcUrls.default.http[0]),
+      http("https://rpc.ankr.com/celo_alfajores"),
+    ]),
   },
   ssr: true,
 });

@@ -59,7 +59,7 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
     }
 
     function setBasePenaltyBps(uint256 nextBps) external onlyOwner {
-        if (nextBps > BPS_DENOMINATOR) revert InvalidAmount();
+        if (nextBps < 100 || nextBps > BPS_DENOMINATOR) revert InvalidAmount(); // floor: 1%, ceiling: 100%
         BASE_PENALTY_BPS = nextBps;
     }
 
