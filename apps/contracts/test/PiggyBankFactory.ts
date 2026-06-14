@@ -265,6 +265,21 @@ describe("PiggyBankFactory", function () {
       factory.write.setBasePenaltyBps([600n], { account: stranger.account })
     ).to.be.rejected;
   });
+
+  it("rejects setBasePenaltyBps below the 1% floor", async function () {
+    const { factory, owner } = await loadFixture(deployFixture);
+
+    await expect(
+      factory.write.setBasePenaltyBps([99n], { account: owner.account })
+    ).to.be.rejected;
+
+    await expect(
+      factory.write.setBasePenaltyBps([0n], { account: owner.account })
+    ).to.be.rejected;
+
+    await factory.write.setBasePenaltyBps([100n], { account: owner.account });
+    expect(await factory.read.BASE_PENALTY_BPS()).to.equal(100n);
+  });
 });
 
 describe("PenaltyReserve", function () {

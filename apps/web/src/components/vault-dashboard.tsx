@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { useAccount, useBalance, usePublicClient, useReadContract, useReadContracts, useWriteContract } from "wagmi";
 import {
   AlertTriangle,
-  ArrowRight,
   ArrowUpRight,
   CheckCircle2,
   Clock3,
@@ -58,24 +57,11 @@ type OptimisticState = {
 
 const STARTER_DEPOSIT_QUERY_KEY = "starterDeposit";
 
-function shortDate(deadline: bigint) {
-  if (deadline === 0n) return "No deadline";
-  return new Date(Number(deadline) * 1000).toLocaleDateString();
-}
-
 function weeksUntil(deadline: bigint) {
   if (deadline === 0n) return null;
   const diffMs = Number(deadline) * 1000 - Date.now();
   if (diffMs <= 0) return 0;
   return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 7)));
-}
-
-function formatPlannerAmount(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return `0 ${PRIMARY_STABLE_TOKEN.symbol}`;
-  return `${value.toLocaleString(undefined, {
-    minimumFractionDigits: value < 10 ? 1 : 0,
-    maximumFractionDigits: value < 10 ? 1 : 2,
-  })} ${PRIMARY_STABLE_TOKEN.symbol}`;
 }
 
 function formatOptimisticBalance(balanceFormatted: string | undefined, walletDelta: bigint) {
