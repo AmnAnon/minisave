@@ -20,6 +20,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta
+          name="talentapp:project_verification"
+          content="1c401be5733d3bf8610233e302462474947e28b1eb760b367cbb47616ea7cecd6553d87b01604869984e272194cc2295d1efdfe5fbb6964cd7e3feb49a09bd793"
+        />
+      </head>
       <body className={inter.className}>
         <div className="relative flex min-h-screen flex-col">
           <WalletProvider>
