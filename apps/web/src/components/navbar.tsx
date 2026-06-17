@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Home, PiggyBank, PlusCircle, WalletCards } from "lucide-react";
+import { Home, PlusCircle, WalletCards } from "lucide-react";
 import { ConnectButton } from "@/components/connect-button";
 import { targetChain } from "@/lib/chains";
 import { MINISAVE_APP_NAME } from "@/lib/minisave";
@@ -21,8 +22,15 @@ export function Navbar() {
       <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0d1117]/88 backdrop-blur-xl">
         <div className="container flex min-h-16 max-w-screen-2xl items-center justify-between px-4 py-2">
           <Link href="/" className="group flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
-              <PiggyBank className="h-5 w-5" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-emerald-500/20">
+              <Image
+                src="/logo.jpg"
+                alt="MiniSave logo"
+                width={40}
+                height={40}
+                className="object-cover"
+                priority
+              />
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold tracking-wide text-zinc-50">{MINISAVE_APP_NAME}</div>

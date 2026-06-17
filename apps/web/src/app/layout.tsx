@@ -11,6 +11,15 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'MiniSave',
   description: 'MiniPay-native savings goals on Celo',
+  icons: {
+    icon: '/logo.jpg',
+    apple: '/logo.jpg',
+  },
+  openGraph: {
+    title: 'MiniSave',
+    description: 'Commit to a savings goal. Exit early and pay for it.',
+    images: [{ url: '/logo.jpg', width: 1024, height: 1024, alt: 'MiniSave' }],
+  },
 };
 
 export default function RootLayout({
