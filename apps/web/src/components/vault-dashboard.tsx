@@ -804,30 +804,15 @@ export function VaultDashboard() {
       <TxBanner tx={txState} chainId={targetChain.id} />
       <NetworkGuard />
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-400">
-        If a vault says it was created but does not appear yet, tap <strong>Refresh</strong> and confirm the transaction on the configured explorer from the tx status rail or wallet history.
-      </div>
-
-      <div className="rounded-[30px] border border-white/10 bg-black/20 p-5 shadow-[0_16px_50px_rgba(0,0,0,0.20)]">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-200/45">Portfolio</div>
-            <h2 className="mt-2 text-3xl font-semibold text-zinc-50">Your live vaults</h2>
-            <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-              Every live vault from this wallet is listed here. Select one card and act directly below it.
-            </p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-200/70">
-              <TrendingUp className="h-3.5 w-3.5" /> Premium live portfolio rail
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Button type="button" onClick={() => refreshAll()} variant="outline" className="border-white/10 text-zinc-100 hover:bg-white/5">
-              <ArrowUpRight className="mr-2 h-4 w-4" /> Refresh
-            </Button>
-            <Button asChild className="bg-emerald-500 text-slate-950 hover:bg-emerald-400">
-              <Link href="/create"><Plus className="mr-2 h-4 w-4" />New vault</Link>
-            </Button>
-          </div>
+      <div className="flex items-center justify-between gap-4 font-mono">
+        <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Your Vaults</h2>
+        <div className="flex gap-2">
+          <Button type="button" onClick={() => refreshAll()} variant="outline" size="sm" className="h-9 border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10">
+            <ArrowUpRight className="mr-2 h-4 w-4" /> Refresh
+          </Button>
+          <Button asChild size="sm" className="h-9 bg-emerald-500 text-slate-950 hover:bg-emerald-400">
+            <Link href="/create"><Plus className="mr-2 h-4 w-4" />New Vault</Link>
+          </Button>
         </div>
       </div>
 

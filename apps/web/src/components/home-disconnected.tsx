@@ -52,7 +52,7 @@ export function HomeDisconnected() {
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <ShieldCheck className="mt-1 h-5 w-5 text-amber-300" />
+          <ShieldCheck className="mt-1 h-5 w-5 text-emerald-300" />
           <div>
             <div className="text-sm font-medium text-zinc-100">Clear unlock rules</div>
             <p className="mt-1 text-sm text-zinc-400">Withdraw cleanly after the goal is met or the deadline has passed.</p>

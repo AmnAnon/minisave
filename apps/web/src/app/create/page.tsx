@@ -1,18 +1,22 @@
-import { Target } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CreateGoalForm } from "@/components/create-goal-form";
 
 export default function CreateGoalPage() {
   return (
-    <main className="container mx-auto max-w-3xl px-4 py-8 sm:py-12">
-      <div className="mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-300">
-          <Target className="h-4 w-4 text-emerald-300" />
-          Create vault
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6 sm:py-8">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Target className="h-5 w-5 text-emerald-400" />
+          <h1 className="text-xl font-semibold text-zinc-50 font-mono font-semibold">Create Vault</h1>
         </div>
-        <h1 className="mt-4 text-[30px] font-semibold tracking-tight text-zinc-50 sm:text-4xl">Set the target. Fund the vault. Track the climb.</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-          Create a disciplined savings vault for a specific goal, set an optional unlock date, and manage everything from portfolio.
-        </p>
+        <Button asChild variant="outline" size="sm" className="h-9 border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10 font-mono">
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Link>
+        </Button>
       </div>
 
       <CreateGoalForm />

@@ -8,32 +8,23 @@ import { VaultDashboard } from "@/components/vault-dashboard";
 
 export function HomeConnected() {
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">Home</div>
-          <h1 className="mt-2 text-3xl font-semibold text-zinc-50 sm:text-4xl">Your savings dashboard</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Track wallet balances, review vault status, and move directly into your next action.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild className="w-full bg-emerald-500 text-slate-950 hover:bg-emerald-400 sm:w-auto">
-            <Link href="/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Create vault
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10 sm:w-auto">
-            <Link href="/portfolio">
-              <WalletCards className="mr-2 h-4 w-4" />
-              Open portfolio
-            </Link>
-          </Button>
-        </div>
-      </div>
-
+    <section className="space-y-5">
       <UserBalance />
+
+      <div className="flex gap-3">
+        <Button asChild className="h-11 flex-1 bg-emerald-500 text-sm font-semibold text-slate-950 hover:bg-emerald-400">
+          <Link href="/create">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Vault
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="h-11 flex-1 border-white/10 bg-white/5 text-sm font-semibold text-zinc-100 hover:bg-white/10">
+          <Link href="/portfolio">
+            <WalletCards className="mr-2 h-4 w-4" />
+            Portfolio
+          </Link>
+        </Button>
+      </div>
 
       <VaultDashboard />
     </section>
