@@ -15,10 +15,11 @@ const wagmiConfig = createConfig({
     [mainnetChain.id]: fallback([
       http(mainnetChain.rpcUrls.default.http[0]),
       http("https://rpc.ankr.com/celo"),
+      http("https://1rpc.io/celo"),
     ]),
     [sepoliaChain.id]: fallback([
       http(sepoliaChain.rpcUrls.default.http[0]),
-      http("https://rpc.ankr.com/celo_alfajores"),
+      http("https://celo-sepolia.drpc.org"),
     ]),
   },
   ssr: true,

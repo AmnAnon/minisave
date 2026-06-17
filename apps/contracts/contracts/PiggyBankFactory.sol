@@ -44,6 +44,8 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         uint256 penaltyAmount,
         bool early
     );
+    event TokensRescued(address indexed token, address indexed to, uint256 amount);
+    event CeloRescued(address indexed to, uint256 amount);
 
     error InvalidAddress();
     error InvalidAmount();
@@ -51,6 +53,7 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
     error InvalidLabel();
     error VaultNotFound();
     error VaultClosed();
+    error NativeTransferFailed();
 
     constructor(address _token, address _penaltyReserve) Ownable(msg.sender) {
         if (_token == address(0) || _penaltyReserve == address(0)) revert InvalidAddress();
@@ -168,6 +171,25 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         uint256 decayFactor = (timeRemaining * 1e18) / totalLockPeriod;
         uint256 effectiveBPS = (penaltyBps * decayFactor) / 1e18;
         return (principal * effectiveBPS) / BPS_DENOMINATOR;
+    }
+
+    function rescueTokens(
+        address tokenAddress,
+        address to,
+        uint256 amount
+    ) external onlyOwner {
+        if (to == address(0)) revert InvalidAddress();
+        if (tokenAddress == token) revert InvalidAddress();
+        IERC20(tokenAddress).safeTransfer(to, amount);
+        emit TokensRescued(tokenAddress, to, amount);
+    }
+
+    function rescueCELO(address payable to, uint256 amount) external onlyOwner {
+        if (to == address(0)) revert InvalidAddress();
+        if (amount == 0) revert InvalidAmount();
+        (bool success, ) = to.call{value: amount}("");
+        if (!success) revert NativeTransferFailed();
+        emit CeloRescued(to, amount);
     }
 
     function _vault(address owner, uint256 vaultId) internal view returns (Vault storage vault) {

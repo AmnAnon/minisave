@@ -15,10 +15,13 @@ contract PenaltyReserve is Ownable {
     event FactorySet(address indexed factory);
     event PenaltyReceived(uint256 amount);
     event PoolMigrated(address newContract, uint256 amount);
+    event TokensRescued(address indexed token, address indexed to, uint256 amount);
+    event CeloRescued(address indexed to, uint256 amount);
 
     error Unauthorized();
     error InvalidAddress();
     error FactoryAlreadySet();
+    error NativeTransferFailed();
 
     constructor(address _token, address initialOwner) Ownable(initialOwner) {
         if (_token == address(0) || initialOwner == address(0)) revert InvalidAddress();
@@ -43,5 +46,23 @@ contract PenaltyReserve is Ownable {
         uint256 amount = token.balanceOf(address(this));
         token.safeTransfer(newContract, amount);
         emit PoolMigrated(newContract, amount);
+    }
+
+    function rescueTokens(
+        address tokenAddress,
+        address to,
+        uint256 amount
+    ) external onlyOwner {
+        if (to == address(0)) revert InvalidAddress();
+        if (tokenAddress == address(token)) revert InvalidAddress();
+        IERC20(tokenAddress).safeTransfer(to, amount);
+        emit TokensRescued(tokenAddress, to, amount);
+    }
+
+    function rescueCELO(address payable to, uint256 amount) external onlyOwner {
+        if (to == address(0)) revert InvalidAddress();
+        (bool success, ) = to.call{value: amount}("");
+        if (!success) revert NativeTransferFailed();
+        emit CeloRescued(to, amount);
     }
 }

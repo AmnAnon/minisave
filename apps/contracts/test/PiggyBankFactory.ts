@@ -308,6 +308,52 @@ describe("PiggyBankFactory", function () {
     expect(reserveAfter - reserveBefore).to.equal(expectedPenalty);
     expect(ownerAfter - ownerBefore).to.equal(DEPOSIT_AMOUNT - expectedPenalty);
   });
+
+  it("allows owner to rescue accidentally sent third-party ERC20 tokens", async function () {
+    const { factory, owner, stranger } = await loadFixture(deployFixture);
+    const otherToken = await hre.viem.deployContract("MockERC20", ["Other Stable", "USDC", 6n]);
+    
+    await otherToken.write.mint([factory.address, 1000n]);
+    expect(await otherToken.read.balanceOf([factory.address])).to.equal(1000n);
+
+    await expect(
+      factory.write.rescueTokens([otherToken.address, stranger.account.address, 1000n], { account: stranger.account })
+    ).to.be.rejected;
+
+    await factory.write.rescueTokens([otherToken.address, owner.account.address, 1000n], { account: owner.account });
+    expect(await otherToken.read.balanceOf([factory.address])).to.equal(0n);
+    expect(await otherToken.read.balanceOf([owner.account.address])).to.equal(1000n);
+  });
+
+  it("prevents owner from rescuing the active stablecoin", async function () {
+    const { factory, token, owner } = await loadFixture(deployFixture);
+    await expect(
+      factory.write.rescueTokens([token.address, owner.account.address, 1000n], { account: owner.account })
+    ).to.be.rejected;
+  });
+
+  it("allows owner to rescue native CELO sent to factory", async function () {
+    const { factory, owner, stranger, publicClient } = await loadFixture(deployFixture);
+    
+    await hre.network.provider.send("hardhat_setBalance", [
+      factory.address,
+      "0xde0b6b3a7640000",
+    ]);
+
+    expect(await publicClient.getBalance({ address: factory.address })).to.equal(1000000000000000000n);
+
+    await expect(
+      factory.write.rescueCELO([stranger.account.address, 1000000000000000000n], { account: stranger.account })
+    ).to.be.rejected;
+
+    const beforeBalance = await publicClient.getBalance({ address: owner.account.address });
+    const hash = await factory.write.rescueCELO([owner.account.address, 1000000000000000000n], { account: owner.account });
+    await publicClient.waitForTransactionReceipt({ hash });
+
+    expect(await publicClient.getBalance({ address: factory.address })).to.equal(0n);
+    const afterBalance = await publicClient.getBalance({ address: owner.account.address });
+    expect(afterBalance > beforeBalance).to.equal(true);
+  });
 });
 
 describe("PenaltyReserve", function () {
@@ -381,5 +427,35 @@ describe("PenaltyReserve", function () {
     expect(await token.read.balanceOf([other.account.address])).to.equal(5_000n);
     const event = receipt.logs.find((log) => log.topics[0] === keccak256(stringToHex("PoolMigrated(address,uint256)")));
     expect(event).to.not.equal(undefined);
+  });
+
+  it("allows owner to rescue third-party ERC20 tokens and native CELO", async function () {
+    const { reserve, token, publicClient, reserveOwner, other } = await loadFixture(deployFixture);
+    const otherToken = await hre.viem.deployContract("MockERC20", ["Other Stable", "USDC", 6n]);
+
+    await otherToken.write.mint([reserve.address, 1000n]);
+    await expect(
+      reserve.write.rescueTokens([otherToken.address, other.account.address, 1000n], { account: other.account })
+    ).to.be.rejected;
+
+    await reserve.write.rescueTokens([otherToken.address, reserveOwner.account.address, 1000n], { account: reserveOwner.account });
+    expect(await otherToken.read.balanceOf([reserve.address])).to.equal(0n);
+    expect(await otherToken.read.balanceOf([reserveOwner.account.address])).to.equal(1000n);
+
+    await expect(
+      reserve.write.rescueTokens([token.address, reserveOwner.account.address, 1000n], { account: reserveOwner.account })
+    ).to.be.rejected;
+
+    await hre.network.provider.send("hardhat_setBalance", [
+      reserve.address,
+      "0xde0b6b3a7640000",
+    ]);
+
+    await expect(
+      reserve.write.rescueCELO([other.account.address, 1000000000000000000n], { account: other.account })
+    ).to.be.rejected;
+
+    await reserve.write.rescueCELO([reserveOwner.account.address, 1000000000000000000n], { account: reserveOwner.account });
+    expect(await publicClient.getBalance({ address: reserve.address })).to.equal(0n);
   });
 });
