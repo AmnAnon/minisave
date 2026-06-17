@@ -86,6 +86,8 @@ describe("PiggyBankFactory", function () {
     const { factory, reserve, token, owner } = await loadFixture(deployFixture);
     await createTimedVault(factory, "Day 0 Exit");
 
+    const vault = await factory.read.getVault([owner.account.address, 0n]);
+
     const ownerBefore = await token.read.balanceOf([owner.account.address]);
     const reserveBefore = await token.read.balanceOf([reserve.address]);
 
@@ -93,7 +95,7 @@ describe("PiggyBankFactory", function () {
 
     const ownerAfter = await token.read.balanceOf([owner.account.address]);
     const reserveAfter = await token.read.balanceOf([reserve.address]);
-    const penaltyAmount = (DEPOSIT_AMOUNT * BASE_PENALTY_BPS) / 10_000n;
+    const penaltyAmount = (DEPOSIT_AMOUNT * vault.penaltyBps) / 10_000n;
 
     const ownerDelta = ownerAfter - ownerBefore;
     const reserveDelta = reserveAfter - reserveBefore;
@@ -165,6 +167,8 @@ describe("PiggyBankFactory", function () {
     await factory.write.deposit([0n, DEPOSIT_AMOUNT]);
     await time.increase(Number(ONE_HUNDRED_DAYS / 2n));
 
+    const vault = await factory.read.getVault([owner.account.address, 0n]);
+
     const ownerBefore = await token.read.balanceOf([owner.account.address]);
     const reserveBefore = await token.read.balanceOf([reserve.address]);
 
@@ -172,7 +176,7 @@ describe("PiggyBankFactory", function () {
 
     const ownerAfter = await token.read.balanceOf([owner.account.address]);
     const reserveAfter = await token.read.balanceOf([reserve.address]);
-    const penaltyAmount = (DEPOSIT_AMOUNT * BASE_PENALTY_BPS) / 10_000n;
+    const penaltyAmount = (DEPOSIT_AMOUNT * vault.penaltyBps) / 10_000n;
 
     expect(ownerAfter - ownerBefore).to.equal(DEPOSIT_AMOUNT - penaltyAmount);
     expect(reserveAfter - reserveBefore).to.equal(penaltyAmount);
@@ -220,6 +224,8 @@ describe("PiggyBankFactory", function () {
     const deadline = BigInt((await time.latest()) + Number(ONE_HUNDRED_DAYS));
     await factory.write.createVault(["Late Big Deposit", 20_000n * 10_000n, deadline]);
     
+    const vault = await factory.read.getVault([owner.account.address, 0n]);
+    
     // Day 0: Deposit 1 unit
     await factory.write.deposit([0n, 1n]);
     
@@ -247,7 +253,7 @@ describe("PiggyBankFactory", function () {
     // With weighted average:
     // nextCreatedAt = (createdAt * 1 + now * 10000) / 10001
     // At 99% elapsed, the penalty BPS should be extremely close to 8% (the full base penalty).
-    const expectedPenalty = (totalDeposited * BASE_PENALTY_BPS) / 10_000n; // ~800n
+    const expectedPenalty = (totalDeposited * vault.penaltyBps) / 10_000n; // ~800n
     
     expect(reserveDelta >= expectedPenalty - 10n && reserveDelta <= expectedPenalty + 10n).to.equal(true);
     expect(ownerDelta >= (totalDeposited - expectedPenalty) - 10n && ownerDelta <= (totalDeposited - expectedPenalty) + 10n).to.equal(true);
@@ -279,6 +285,28 @@ describe("PiggyBankFactory", function () {
 
     await factory.write.setBasePenaltyBps([100n], { account: owner.account });
     expect(await factory.read.BASE_PENALTY_BPS()).to.equal(100n);
+  });
+
+  it("freezes the penalty rate at vault creation, unaffected by owner changes to BASE_PENALTY_BPS", async function () {
+    const { factory, reserve, token, owner } = await loadFixture(deployFixture);
+    await factory.write.createVault(["Snapshot Lock", 1_000_000n, 0n]);
+    await factory.write.deposit([0n, DEPOSIT_AMOUNT]);
+
+    // Owner modifies base penalty BPS after creation
+    await factory.write.setBasePenaltyBps([500n], { account: owner.account });
+
+    const ownerBefore = await token.read.balanceOf([owner.account.address]);
+    const reserveBefore = await token.read.balanceOf([reserve.address]);
+
+    await factory.write.withdraw([0n]);
+
+    const ownerAfter = await token.read.balanceOf([owner.account.address]);
+    const reserveAfter = await token.read.balanceOf([reserve.address]);
+
+    // Penalty must still be 8% (original snapshot), not the updated 5%
+    const expectedPenalty = (DEPOSIT_AMOUNT * 800n) / 10_000n;
+    expect(reserveAfter - reserveBefore).to.equal(expectedPenalty);
+    expect(ownerAfter - ownerBefore).to.equal(DEPOSIT_AMOUNT - expectedPenalty);
   });
 });
 

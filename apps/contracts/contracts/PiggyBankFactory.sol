@@ -20,6 +20,7 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         uint256 createdAt;
         uint256 deposited;
         bool withdrawn;
+        uint256 penaltyBps;
     }
 
     address public immutable token;
@@ -80,7 +81,8 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
                 deadline: deadline,
                 createdAt: block.timestamp,
                 deposited: 0,
-                withdrawn: false
+                withdrawn: false,
+                penaltyBps: BASE_PENALTY_BPS
             })
         );
 
@@ -112,7 +114,7 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         uint256 userAmount = vault.deposited;
 
         if (!unlocked) {
-            penaltyAmount = calculatePenalty(vault.deposited, vault.deadline, vault.createdAt);
+            penaltyAmount = calculatePenalty(vault.deposited, vault.deadline, vault.createdAt, vault.penaltyBps);
             userAmount = vault.deposited - penaltyAmount;
             if (penaltyAmount > 0) {
                 IERC20(token).safeTransfer(penaltyReserve, penaltyAmount);
@@ -151,10 +153,11 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
     function calculatePenalty(
         uint256 principal,
         uint256 deadline,
-        uint256 createdAt
+        uint256 createdAt,
+        uint256 penaltyBps
     ) internal view returns (uint256) {
         if (deadline == 0) {
-            return (principal * BASE_PENALTY_BPS) / BPS_DENOMINATOR;
+            return (principal * penaltyBps) / BPS_DENOMINATOR;
         }
         if (block.timestamp >= deadline) {
             return 0;
@@ -163,7 +166,7 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         uint256 totalLockPeriod = deadline - createdAt;
         if (totalLockPeriod == 0) return 0;
         uint256 decayFactor = (timeRemaining * 1e18) / totalLockPeriod;
-        uint256 effectiveBPS = (BASE_PENALTY_BPS * decayFactor) / 1e18;
+        uint256 effectiveBPS = (penaltyBps * decayFactor) / 1e18;
         return (principal * effectiveBPS) / BPS_DENOMINATOR;
     }
 

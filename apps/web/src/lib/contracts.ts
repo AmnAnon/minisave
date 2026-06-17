@@ -56,6 +56,7 @@ export const piggyBankFactoryAbi = [
           { name: "createdAt", type: "uint256" },
           { name: "deposited", type: "uint256" },
           { name: "withdrawn", type: "bool" },
+          { name: "penaltyBps", type: "uint256" },
         ],
       },
     ],
@@ -76,6 +77,7 @@ export const piggyBankFactoryAbi = [
           { name: "createdAt", type: "uint256" },
           { name: "deposited", type: "uint256" },
           { name: "withdrawn", type: "bool" },
+          { name: "penaltyBps", type: "uint256" },
         ],
       },
     ],
@@ -126,6 +128,7 @@ export type VaultView = {
   createdAt: bigint;
   deposited: bigint;
   withdrawn: boolean;
+  penaltyBps: bigint;
 };
 
 export function toTokenUnits(value: string, decimals = PRIMARY_STABLE_TOKEN.decimals) {
@@ -174,12 +177,12 @@ export function vaultUnlocked(vault: VaultView) {
 }
 
 export function calculatePenaltyBps(vault: VaultView, nowSeconds = BigInt(Math.floor(Date.now() / 1000))) {
-  if (vault.deadline === 0n) return BASE_PENALTY_BPS;
+  if (vault.deadline === 0n) return Number(vault.penaltyBps);
   if (nowSeconds >= vault.deadline) return 0;
   const totalLockPeriod = vault.deadline - vault.createdAt;
   if (totalLockPeriod <= 0n) return 0;
   const timeRemaining = vault.deadline - nowSeconds;
-  return Number((BigInt(BASE_PENALTY_BPS) * timeRemaining) / totalLockPeriod);
+  return Number((vault.penaltyBps * timeRemaining) / totalLockPeriod);
 }
 
 export function estimatePenaltyAmount(vault: VaultView, principal: bigint, nowSeconds = BigInt(Math.floor(Date.now() / 1000))) {

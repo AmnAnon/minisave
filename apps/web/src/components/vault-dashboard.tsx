@@ -747,6 +747,7 @@ export function VaultDashboard() {
             deposited: 0n,
             createdAt: BigInt(Math.floor(Date.now() / 1000)),
             withdrawn: false,
+            penaltyBps: BigInt(BASE_PENALTY_BPS),
           },
         },
       }));
