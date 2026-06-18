@@ -152,12 +152,19 @@ export function resolveFactoryAddress() {
 export async function waitForConfirmedReceipt(
   publicClient: PublicClient | undefined,
   hash: `0x${string}`,
+  timeoutMs = 60_000,
 ) {
   if (!publicClient) {
     throw new Error("Target network client is unavailable.");
   }
 
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  const receipt = await Promise.race([
+    publicClient.waitForTransactionReceipt({ hash }),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Transaction timed out after 60s waiting for confirmation. The tx may still confirm — check your wallet or explorer.")), timeoutMs)
+    ),
+  ]);
+
   if (receipt.status !== "success") {
     throw new Error("Transaction failed onchain.");
   }

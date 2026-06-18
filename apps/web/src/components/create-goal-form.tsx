@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { NetworkGuard } from "@/components/network-guard";
 import { explorerTxUrl } from "@/lib/chains";
 import { piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits, waitForConfirmedReceipt } from "@/lib/contracts";
+import { formatBalance, humanizeError } from "@/lib/form-utils";
 import { BASE_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 import { useChainGuard } from "@/lib/use-chain-guard";
 
@@ -17,20 +18,6 @@ function dateToUnixTimestamp(value: string) {
   if (!value) return 0n;
   const parsed = new Date(`${value}T00:00:00Z`);
   return BigInt(Math.floor(parsed.getTime() / 1000));
-}
-
-function formatBalance(value?: string) {
-  return Number(value || "0").toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 4,
-  });
-}
-
-function humanizeError(err: unknown) {
-  const message = err instanceof Error ? err.message : "Transaction failed.";
-  if (message.toLowerCase().includes("user rejected")) return "Transaction rejected in wallet.";
-  if (message.toLowerCase().includes("insufficient funds")) return "Not enough CELO for gas or token balance for this action.";
-  return message;
 }
 
 export function CreateGoalForm() {
@@ -44,7 +31,7 @@ export function CreateGoalForm() {
     address,
     chainId: targetChain.id,
     token: PRIMARY_STABLE_TOKEN.address,
-    query: { enabled: Boolean(address), refetchInterval: 4000 },
+    query: { enabled: Boolean(address), refetchInterval: 15_000 },
   });
   const { data: vaultCountData, refetch: refetchVaultCount } = useReadContract({
     abi: piggyBankFactoryAbi,
@@ -52,7 +39,7 @@ export function CreateGoalForm() {
     chainId: targetChain.id,
     functionName: "getVaultCount",
     args: address ? [address] : undefined,
-    query: { enabled: Boolean(address && factoryAddress && !isWrongChain), refetchInterval: 4000 },
+    query: { enabled: Boolean(address && factoryAddress && !isWrongChain), refetchInterval: 15_000 },
   });
 
   const [title, setTitle] = useState("");
@@ -182,6 +169,7 @@ export function CreateGoalForm() {
             onChange={(e) => setTitle(e.target.value)}
             className="h-12 rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-zinc-50 outline-none transition focus:border-emerald-400/40"
             placeholder="Emergency fund"
+            maxLength={100}
           />
         </label>
 
@@ -191,7 +179,7 @@ export function CreateGoalForm() {
           </div>
           <input
             value={targetAmount}
-            onChange={(e) => setTargetAmount(e.target.value)}
+            onChange={(e) => { const v = e.target.value; if (v === "" || /^\d*\.?\d*$/.test(v)) setTargetAmount(v); }}
             className="h-12 rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-zinc-50 outline-none transition focus:border-emerald-400/40"
             placeholder="800"
             inputMode="decimal"
@@ -208,10 +196,11 @@ export function CreateGoalForm() {
           </div>
           <input
             value={starterDeposit}
-            onChange={(e) => setStarterDeposit(e.target.value)}
+            onChange={(e) => { const v = e.target.value; if (v === "" || /^\d*\.?\d*$/.test(v)) setStarterDeposit(v); }}
             className="h-12 rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-zinc-50 outline-none transition focus:border-emerald-400/40"
             placeholder="25"
             inputMode="decimal"
+            maxLength={15}
           />
           <div className="flex flex-wrap gap-2">
             {["10", "25", "50", "100"].map((value) => (

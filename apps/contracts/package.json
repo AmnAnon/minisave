@@ -7,6 +7,7 @@
     "build": "hardhat compile",
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "coverage": "hardhat coverage",
     "deploy": "hardhat ignition deploy ignition/modules/PiggyBankFactory.ts",
     "deploy:mock-token": "hardhat ignition deploy ignition/modules/MockERC20.ts --network celoSepolia",
     "deploy:celo-sepolia": "hardhat ignition deploy ignition/modules/PiggyBankFactory.ts --network celoSepolia",

@@ -3,15 +3,9 @@
 import Link from "next/link";
 import { BadgeCheck, ExternalLink, PiggyBank, Wallet, Waves } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
+import { formatBalance } from "@/lib/form-utils";
 import { PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 import { explorerAddressUrl, targetChain } from "@/lib/chains";
-
-function formatBalance(value?: string, decimals = 4) {
-  return Number(value || "0").toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
-  });
-}
 
 export function UserBalance() {
   const { address, isConnected, chain } = useAccount();
@@ -19,14 +13,14 @@ export function UserBalance() {
   const { data: celoBalance, isLoading: celoLoading } = useBalance({
     address,
     chainId: targetChain.id,
-    query: { enabled: Boolean(address), refetchInterval: 4000 },
+    query: { enabled: Boolean(address), refetchInterval: 15_000 },
   });
 
   const { data: stableBalance, isLoading: stableLoading, isRefetching: stableRefreshing } = useBalance({
     address,
     chainId: targetChain.id,
     token: PRIMARY_STABLE_TOKEN.address,
-    query: { enabled: Boolean(address), refetchInterval: 4000 },
+    query: { enabled: Boolean(address), refetchInterval: 15_000 },
   });
 
   if (!isConnected || !address) {

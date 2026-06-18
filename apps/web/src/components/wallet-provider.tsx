@@ -39,7 +39,7 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
 
     const injectedConnector = connectors[0];
     if (injectedConnector) {
-      connect({ connector: injectedConnector });
+      Promise.resolve(connect({ connector: injectedConnector })).catch(() => {});
       setAttemptedMiniPayConnect(true);
     }
   }, [attemptedMiniPayConnect, connect, connectors]);

@@ -5,9 +5,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {PenaltyReserve} from "./PenaltyReserve.sol";
 
-contract PiggyBankFactory is ReentrancyGuard, Ownable {
+contract PiggyBankFactory is ReentrancyGuard, Ownable2Step, Pausable {
     using SafeERC20 for IERC20;
 
     uint256 public constant BPS_DENOMINATOR = 10_000;
@@ -62,6 +64,14 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         penaltyReserve = _penaltyReserve;
     }
 
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
     function setBasePenaltyBps(uint256 nextBps) external onlyOwner {
         if (nextBps < 100 || nextBps > BPS_DENOMINATOR) revert InvalidAmount(); // floor: 1%, ceiling: 100%
         BASE_PENALTY_BPS = nextBps;
@@ -71,7 +81,7 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         string calldata label,
         uint256 goalAmount,
         uint256 deadline
-    ) external returns (uint256 vaultId) {
+    ) external whenNotPaused returns (uint256 vaultId) {
         if (bytes(label).length == 0) revert InvalidLabel();
         if (goalAmount == 0) revert InvalidAmount();
         if (deadline != 0 && deadline <= block.timestamp) revert InvalidDeadline();
@@ -92,7 +102,7 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         emit VaultCreated(msg.sender, vaultId, label, goalAmount, deadline);
     }
 
-    function deposit(uint256 vaultId, uint256 amount) external nonReentrant {
+    function deposit(uint256 vaultId, uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert InvalidAmount();
 
         Vault storage vault = _vault(msg.sender, vaultId);
@@ -105,7 +115,7 @@ contract PiggyBankFactory is ReentrancyGuard, Ownable {
         emit Deposited(msg.sender, vaultId, amount, vault.deposited);
     }
 
-    function withdraw(uint256 vaultId) external nonReentrant {
+    function withdraw(uint256 vaultId) external nonReentrant whenNotPaused {
         Vault storage vault = _vault(msg.sender, vaultId);
         if (vault.withdrawn) revert VaultClosed();
         if (vault.deposited == 0) revert InvalidAmount();

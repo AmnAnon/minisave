@@ -354,6 +354,132 @@ describe("PiggyBankFactory", function () {
     const afterBalance = await publicClient.getBalance({ address: owner.account.address });
     expect(afterBalance > beforeBalance).to.equal(true);
   });
+
+  describe("Ownable2Step", function () {
+    it("starts ownership transfer and sets pending owner", async function () {
+      const { factory, owner, stranger } = await loadFixture(deployFixture);
+
+      expect((await factory.read.owner()).toLowerCase()).to.equal(owner.account.address.toLowerCase());
+      expect((await factory.read.pendingOwner()).toLowerCase()).to.equal("0x0000000000000000000000000000000000000000");
+
+      await factory.write.transferOwnership([stranger.account.address], { account: owner.account });
+
+      expect((await factory.read.owner()).toLowerCase()).to.equal(owner.account.address.toLowerCase());
+      expect((await factory.read.pendingOwner()).toLowerCase()).to.equal(stranger.account.address.toLowerCase());
+    });
+
+    it("allows new owner to accept ownership", async function () {
+      const { factory, owner, stranger } = await loadFixture(deployFixture);
+
+      await factory.write.transferOwnership([stranger.account.address], { account: owner.account });
+      await factory.write.acceptOwnership({ account: stranger.account });
+
+      expect((await factory.read.owner()).toLowerCase()).to.equal(stranger.account.address.toLowerCase());
+      expect((await factory.read.pendingOwner()).toLowerCase()).to.equal("0x0000000000000000000000000000000000000000");
+    });
+
+    it("rejects acceptOwnership from non-pending owner", async function () {
+      const { factory, owner, stranger, reserveOwner } = await loadFixture(deployFixture);
+
+      await factory.write.transferOwnership([stranger.account.address], { account: owner.account });
+
+      await expect(
+        factory.write.acceptOwnership({ account: reserveOwner.account })
+      ).to.be.rejected;
+    });
+
+    it("allows new owner to perform admin actions after acceptance", async function () {
+      const { factory, owner, stranger } = await loadFixture(deployFixture);
+
+      await factory.write.transferOwnership([stranger.account.address], { account: owner.account });
+      await factory.write.acceptOwnership({ account: stranger.account });
+
+      await factory.write.setBasePenaltyBps([500n], { account: stranger.account });
+      expect(await factory.read.BASE_PENALTY_BPS()).to.equal(500n);
+    });
+
+    it("rejects transferOwnership from non-owner", async function () {
+      const { factory, stranger } = await loadFixture(deployFixture);
+
+      await expect(
+        factory.write.transferOwnership([stranger.account.address], { account: stranger.account })
+      ).to.be.rejected;
+    });
+  });
+
+  describe("Pausable", function () {
+    it("owner can pause and unpause", async function () {
+      const { factory, owner } = await loadFixture(deployFixture);
+
+      await factory.write.pause({ account: owner.account });
+      expect(await factory.read.paused()).to.equal(true);
+
+      await factory.write.unpause({ account: owner.account });
+      expect(await factory.read.paused()).to.equal(false);
+    });
+
+    it("rejects pause from non-owner", async function () {
+      const { factory, stranger } = await loadFixture(deployFixture);
+
+      await expect(
+        factory.write.pause({ account: stranger.account })
+      ).to.be.rejected;
+    });
+
+    it("blocks createVault when paused", async function () {
+      const { factory, owner } = await loadFixture(deployFixture);
+
+      await factory.write.pause({ account: owner.account });
+
+      await expect(
+        factory.write.createVault(["Should Fail", 1_000_000n, 0n])
+      ).to.be.rejected;
+    });
+
+    it("blocks deposit when paused", async function () {
+      const { factory, owner } = await loadFixture(deployFixture);
+
+      await factory.write.createVault(["Pre-pause Vault", 1_000_000n, 0n]);
+      await factory.write.pause({ account: owner.account });
+
+      await expect(
+        factory.write.deposit([0n, 100n])
+      ).to.be.rejected;
+    });
+
+    it("blocks withdraw when paused", async function () {
+      const { factory, owner } = await loadFixture(deployFixture);
+
+      await factory.write.createVault(["Pre-pause Vault", 1_000_000n, 0n]);
+      await factory.write.deposit([0n, 100n]);
+      await factory.write.pause({ account: owner.account });
+
+      await expect(
+        factory.write.withdraw([0n])
+      ).to.be.rejected;
+    });
+
+    it("resumes operations after unpause", async function () {
+      const { factory, owner } = await loadFixture(deployFixture);
+
+      await factory.write.pause({ account: owner.account });
+      await factory.write.unpause({ account: owner.account });
+
+      await factory.write.createVault(["Post-unpause", 1_000_000n, 0n]);
+      const count = await factory.read.getVaultCount([owner.account.address]);
+      expect(count).to.equal(1n);
+    });
+
+    it("allows admin functions while paused", async function () {
+      const { factory, owner } = await loadFixture(deployFixture);
+
+      await factory.write.pause({ account: owner.account });
+
+      // setBasePenaltyBps and rescueTokens are not paused
+      await factory.write.setBasePenaltyBps([500n], { account: owner.account });
+      expect(await factory.read.BASE_PENALTY_BPS()).to.equal(500n);
+    });
+  });
 });
 
 describe("PenaltyReserve", function () {
@@ -457,5 +583,20 @@ describe("PenaltyReserve", function () {
 
     await reserve.write.rescueCELO([reserveOwner.account.address, 1000000000000000000n], { account: reserveOwner.account });
     expect(await publicClient.getBalance({ address: reserve.address })).to.equal(0n);
+  });
+
+  describe("Ownable2Step", function () {
+    it("starts ownership transfer and allows acceptance", async function () {
+      const { reserve, reserveOwner, other } = await loadFixture(deployFixture);
+
+      expect((await reserve.read.owner()).toLowerCase()).to.equal(reserveOwner.account.address.toLowerCase());
+
+      await reserve.write.transferOwnership([other.account.address], { account: reserveOwner.account });
+      expect((await reserve.read.pendingOwner()).toLowerCase()).to.equal(other.account.address.toLowerCase());
+      expect((await reserve.read.owner()).toLowerCase()).to.equal(reserveOwner.account.address.toLowerCase());
+
+      await reserve.write.acceptOwnership({ account: other.account });
+      expect((await reserve.read.owner()).toLowerCase()).to.equal(other.account.address.toLowerCase());
+    });
   });
 });
