@@ -83,13 +83,13 @@ Why this architecture matters:
 This reserve-first design is one of the strongest parts of the project because it turns penalties into a visible communal onchain pool rather than hidden protocol fees.
 
 ## Current status
-MiniSave already has its core product loop in place on Celo Sepolia:
-- users can create savings vaults
-- deposit a stablecoin into those vaults
-- exit early with a time-decaying penalty
-- route penalties into a separate public reserve
-
-The app and contract system are already live enough to demonstrate the mechanic, not just describe it.
+MiniSave is live on **Celo Mainnet** with v2 contracts (Ownable2Step + Pausable):
+- create savings vaults with goal amounts and optional deadlines
+- deposit cUSD into vaults
+- withdraw with time-decaying 8% early-exit penalty
+- route penalties into a transparent public PenaltyReserve
+- pause mechanism for emergency stops
+- 2-step ownership transfer for governance safety
 
 ## Current active Sepolia deployment
 MiniSave is currently wired to a fresh Celo Sepolia deployment using an existing mock stablecoin for test velocity.
@@ -101,19 +101,23 @@ MiniSave is currently wired to a fresh Celo Sepolia deployment using an existing
 | PenaltyReserve | [`0x7eC901e27655ADf1Ce7032648b6A753e2F2651C8`](https://celo-sepolia.blockscout.com/address/0x7eC901e27655ADf1Ce7032648b6A753e2F2651C8) |
 | PiggyBankFactory | [`0x8379B08dc238010D0adE1E7E2B14e51be4DE85df`](https://celo-sepolia.blockscout.com/address/0x8379B08dc238010D0adE1E7E2B14e51be4DE85df) |
 
-## Celo Mainnet deployment
-> Contracts will be deployed to Celo Mainnet as part of the submission flow.
-> Addresses and Celoscan links will be added here immediately after deployment.
+## Celo Mainnet deployment (v2 — Ownable2Step + Pausable)
 
+| Contract | Address |
+|---|---|
+| PenaltyReserve | [`0x1Baf901275d9362Fd125ce8D2809491CB7A8c67c`](https://celoscan.io/address/0x1Baf901275d9362Fd125ce8D2809491CB7A8c67c) |
+| PiggyBankFactory | [`0x48a813B10ca70c3fbB91af852335D7603E6Ee7bB`](https://celoscan.io/address/0x48a813B10ca70c3fbB91af852335D7603E6Ee7bB) |
+| Stable token (cUSD) | [`0x765DE816845861e75A25fCA122bb6898B8B1282a`](https://celoscan.io/token/0x765DE816845861e75A25fCA122bb6898B8B1282a) |
+
+### Previous v1 mainnet deployment (deprecated)
 | Contract | Address |
 |---|---|
 | PenaltyReserve | [`0xB1bC2dA89f912cCF02Be29502Ce6B5ff57a566C6`](https://celoscan.io/address/0xB1bC2dA89f912cCF02Be29502Ce6B5ff57a566C6) |
 | PiggyBankFactory | [`0x995Ca2D73744B0Fa1942Fe5A2e10d6a709f7963f`](https://celoscan.io/address/0x995Ca2D73744B0Fa1942Fe5A2e10d6a709f7963f) |
-| Stable token (cUSD) | [`0x765de816845861e75a25fca122bb6898b8b1282a`](https://celoscan.io/token/0x765de816845861e75a25fca122bb6898b8b1282a) |
 
-> **Note on stablecoin addresses**: `0x765DE816845861e75A25fCA122bb6898B8B1282a` is **cUSD** on Celo mainnet.
-> The USDm / Mento dollar address is `0x765de816845861e75a25fca122bb6898b8b1282a` (same contract — cUSD *is* the Mento dollar).
-> The app token is configurable via `NEXT_PUBLIC_DEFAULT_TOKEN_ADDRESS` at deploy time.
+### v2 upgrades over v1
+- **Ownable2Step**: 2-step ownership transfer prevents accidental key compromise
+- **Pausable**: Emergency pause on createVault/deposit/withdraw if vulnerability discovered
 
 ## v1 scope
 MiniSave v1 is intentionally narrow:
@@ -126,16 +130,17 @@ MiniSave v1 is intentionally narrow:
 It is deliberately not a yield farm, not a complex multi-strategy vault system, and not an over-engineered protocol. The first job is to make commitment saving feel obvious and useful.
 
 ## Roadmap
-### v1 remaining work
-- complete live Sepolia smoke test in MiniPay
-- verify approve / create / deposit / withdraw flows on device
-- deploy contracts on Celo mainnet and add addresses above
-- onboard first real testers
 
-### v1.1
-- cleaner portfolio and vault-history UX
-- better mobile confirmation/error states
-- richer explorer linking and reserve transparency
+### v1.1 (current)
+- Ownable2Step + Pausable governance upgrades
+- Frontend: split vault dashboard, memoization, error states, input validation
+- Premium UI: dark/light mode, glass morphism, skeleton loaders
+- CI/CD pipeline with GitHub Actions
+
+### v1.2
+- Multi-token support (USDm, USDC, USDT selector)
+- Vault sharing via deep links and QR codes
+- Savings streaks and gamification
 
 ### v2
 MiniSave v2 can expand in two directions:
@@ -174,7 +179,7 @@ MiniSave lets users create an onchain savings vault for a target amount and opti
 - clear upgrade path from simple v1 to richer saver incentives later
 
 ## Next steps
-1. complete live Sepolia smoke testing end-to-end
-2. finalize mainnet token choice with correct labeling
-3. deploy mainnet contracts
-4. onboard real testers
+1. smoke test: create vault → deposit → verify on Celoscan
+2. onboard first real testers
+3. multi-token support
+4. yield-bearing vaults integration
