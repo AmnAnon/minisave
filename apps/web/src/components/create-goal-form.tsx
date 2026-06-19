@@ -9,10 +9,11 @@ import { ArrowRight, CalendarClock, ChevronRight, Loader2, Target, Wallet } from
 import { Button } from "@/components/ui/button";
 import { NetworkGuard } from "@/components/network-guard";
 import { explorerTxUrl } from "@/lib/chains";
-import { piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits, waitForConfirmedReceipt } from "@/lib/contracts";
+import { erc20Abi, piggyBankFactoryAbi, resolveFactoryAddress, toTokenUnits, waitForConfirmedReceipt } from "@/lib/contracts";
 import { formatBalance, humanizeError } from "@/lib/form-utils";
 import { BASE_PENALTY_BPS, PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 import { useChainGuard } from "@/lib/use-chain-guard";
+import { formatUnits } from "viem";
 
 function dateToUnixTimestamp(value: string) {
   if (!value) return 0n;
@@ -27,12 +28,18 @@ export function CreateGoalForm() {
   const factoryAddress = resolveFactoryAddress();
   const { writeContractAsync, isPending } = useWriteContract();
   const publicClient = usePublicClient({ chainId: targetChain.id });
-  const { data: stableBalance, isLoading: balanceLoading } = useBalance({
-    address,
+  const { data: stableBalanceRaw, isLoading: balanceLoading } = useReadContract({
+    abi: erc20Abi,
+    address: PRIMARY_STABLE_TOKEN.address,
     chainId: targetChain.id,
-    token: PRIMARY_STABLE_TOKEN.address,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
     query: { enabled: Boolean(address), refetchInterval: 15_000 },
   });
+
+  const stableBalanceFormatted = stableBalanceRaw !== undefined
+    ? formatUnits(stableBalanceRaw, PRIMARY_STABLE_TOKEN.decimals)
+    : undefined;
   const { data: vaultCountData, refetch: refetchVaultCount } = useReadContract({
     abi: piggyBankFactoryAbi,
     address: factoryAddress || undefined,
@@ -158,7 +165,7 @@ export function CreateGoalForm() {
           <Wallet className="h-4 w-4 text-emerald-400" />
           <span className="font-semibold">Available {PRIMARY_STABLE_TOKEN.symbol}</span>
         </div>
-        <span className="font-bold text-zinc-50">{balanceLoading ? "..." : formatBalance(stableBalance?.formatted)}</span>
+        <span className="font-bold text-zinc-50">{balanceLoading ? "..." : formatBalance(stableBalanceFormatted)}</span>
       </div>
 
       <div className="grid gap-4">

@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { formatUnits } from "viem";
 import { useAccount, useBalance, useReadContract, useReadContracts } from "wagmi";
 import { ArrowUpRight, LockKeyhole, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { NetworkGuard } from "@/components/network-guard";
 import {
   calculatePenaltyBps,
   daysLeft,
+  erc20Abi,
   formatPenaltyPercent,
   formatTokenAmount,
   piggyBankFactoryAbi,
@@ -116,12 +118,18 @@ export function VaultDashboard() {
   const [jumpToDepositMode, setJumpToDepositMode] = useState(false);
   const factoryAddress = resolveFactoryAddress();
 
-  const { data: walletBalance, refetch: refetchWalletBalance } = useBalance({
-    address,
+  const { data: walletBalanceRaw, refetch: refetchWalletBalance } = useReadContract({
+    abi: erc20Abi,
+    address: PRIMARY_STABLE_TOKEN.address,
     chainId: targetChain.id,
-    token: PRIMARY_STABLE_TOKEN.address,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
     query: { enabled: Boolean(address && !isWrongChain), refetchInterval: 15_000 },
   });
+
+  const walletBalanceFormatted = walletBalanceRaw !== undefined
+    ? formatUnits(walletBalanceRaw, PRIMARY_STABLE_TOKEN.decimals)
+    : undefined;
 
   const { data: gasBalance, refetch: refetchGasBalance } = useBalance({
     address,
@@ -310,7 +318,7 @@ export function VaultDashboard() {
 
   const selectedVault = selectedVaultId !== null ? vaults.find((vault) => vault.vaultId === selectedVaultId) ?? null : vaults[0] ?? null;
   const isLoading = countLoading || vaultsLoading;
-  const displayedWalletBalance = formatOptimisticBalance(walletBalance?.formatted, optimisticState.walletDelta);
+  const displayedWalletBalance = formatOptimisticBalance(walletBalanceFormatted, optimisticState.walletDelta);
   const readError = countError || vaultsError;
 
   if (!isConnected) {

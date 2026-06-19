@@ -83,10 +83,12 @@ export const VaultActionPanel = memo(function VaultActionPanel({
     return () => window.cancelAnimationFrame(frame);
   }, [jumpToDepositMode, selectedVault.vaultId]);
 
-  const { refetch: refetchWalletBalance } = useBalance({
-    address,
+  const { refetch: refetchWalletBalance } = useReadContract({
+    abi: erc20Abi,
+    address: PRIMARY_STABLE_TOKEN.address,
     chainId: targetChain.id,
-    token: PRIMARY_STABLE_TOKEN.address,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
     query: { enabled: Boolean(address && !isWrongChain), refetchInterval: 15_000 },
   });
 

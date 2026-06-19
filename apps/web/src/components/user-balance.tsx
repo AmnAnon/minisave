@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { BadgeCheck, ExternalLink, PiggyBank, Wallet, Waves } from "lucide-react";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount, useBalance, useReadContract } from "wagmi";
 import { formatBalance } from "@/lib/form-utils";
 import { PRIMARY_STABLE_TOKEN } from "@/lib/minisave";
 import { explorerAddressUrl, targetChain } from "@/lib/chains";
+import { erc20Abi } from "@/lib/contracts";
+import { formatUnits } from "viem";
 
 export function UserBalance() {
   const { address, isConnected, chain } = useAccount();
@@ -16,12 +18,18 @@ export function UserBalance() {
     query: { enabled: Boolean(address), refetchInterval: 15_000 },
   });
 
-  const { data: stableBalance, isLoading: stableLoading, isRefetching: stableRefreshing } = useBalance({
-    address,
+  const { data: stableBalanceRaw, isLoading: stableLoading } = useReadContract({
+    abi: erc20Abi,
+    address: PRIMARY_STABLE_TOKEN.address,
     chainId: targetChain.id,
-    token: PRIMARY_STABLE_TOKEN.address,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
     query: { enabled: Boolean(address), refetchInterval: 15_000 },
   });
+
+  const stableBalanceFormatted = stableBalanceRaw !== undefined
+    ? formatUnits(stableBalanceRaw, PRIMARY_STABLE_TOKEN.decimals)
+    : undefined;
 
   if (!isConnected || !address) {
     return null;
@@ -40,7 +48,7 @@ export function UserBalance() {
         </span>
         <span className="text-zinc-600">·</span>
         <span>
-          {stableLoading ? "..." : formatBalance(stableBalance?.formatted, 2)} {PRIMARY_STABLE_TOKEN.symbol}
+          {stableLoading ? "..." : formatBalance(stableBalanceFormatted, 2)} {PRIMARY_STABLE_TOKEN.symbol}
         </span>
       </div>
     </div>
